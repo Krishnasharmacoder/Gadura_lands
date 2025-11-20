@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gadura_land/Screens/Bottom%20navigation/newland.dart';
+import 'package:gadura_land/Screens/Bottom navigation/newland.dart';
+import 'package:gadura_land/Screens/homepage.dart';
 
 class ReviewPage extends StatefulWidget {
   const ReviewPage({super.key});
@@ -9,25 +10,37 @@ class ReviewPage extends StatefulWidget {
 }
 
 class _ReviewPageState extends State<ReviewPage> {
-  int selectedIndex = 0; // 0 = Re-check, 1 = Draft
+  int selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Review")),
+      appBar: AppBar(
+        title: const Text("Review"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const Homepage(),
+              ), // <-- Your homepage
+            );
+          },
+        ),
+      ),
+
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔵 Heading
             const Text(
               "Land Data Management",
               style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
 
-            /// 🔵 Slider Button (Re-check / Draft)
             Container(
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
@@ -44,14 +57,12 @@ class _ReviewPageState extends State<ReviewPage> {
 
             const SizedBox(height: 40),
 
-            /// 🔵 Edit Button
             Center(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // 👉 Navigate to edit form page
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => NewLandPage()),
+                    MaterialPageRoute(builder: (_) => const NewLandPage()),
                   );
                 },
                 icon: const Icon(Icons.edit),
@@ -61,7 +72,6 @@ class _ReviewPageState extends State<ReviewPage> {
 
             const SizedBox(height: 40),
 
-            /// 🔵 Content / Body
             Center(
               child: Text(
                 selectedIndex == 0
@@ -79,16 +89,13 @@ class _ReviewPageState extends State<ReviewPage> {
     );
   }
 
-  /// Custom slider option widget
   Widget _optionButton(String title, int index) {
     bool isSelected = selectedIndex == index;
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            selectedIndex = index;
-          });
+          setState(() => selectedIndex = index);
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),

@@ -23,7 +23,7 @@ class OnboardingScreen extends StatelessWidget {
 
             // 🏠 Title
             const Text(
-              'Welcome to Gadura Land',
+              'Welcome to Garuda Lands',
               style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),

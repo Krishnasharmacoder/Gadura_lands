@@ -472,6 +472,7 @@
 // }
 
 import 'package:flutter/material.dart';
+import 'package:gadura_land/Screens/homepage.dart';
 
 class WalletPage extends StatelessWidget {
   const WalletPage({super.key});
@@ -481,6 +482,17 @@ class WalletPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Wallet"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const Homepage(),
+              ), // <-- Your homepage
+            );
+          },
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,

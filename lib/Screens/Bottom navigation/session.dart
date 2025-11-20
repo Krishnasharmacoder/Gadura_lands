@@ -283,6 +283,8 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:gadura_land/Screens/Bottom%20navigation/newland.dart';
+import 'package:gadura_land/Screens/homepage.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'start session/longexpenses.dart';
@@ -315,6 +317,17 @@ class _SessionPageState extends State<SessionPage> {
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text("Sessions"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const Homepage(),
+              ), // <-- Your homepage
+            );
+          },
+        ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,

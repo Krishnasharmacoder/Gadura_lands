@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Gadura Land',
+      title: 'Garuda Land',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const SplashScreen(),
     );

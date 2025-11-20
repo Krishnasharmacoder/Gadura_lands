@@ -28,10 +28,41 @@ class _LoginState extends State<Login> {
         context,
       ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
     } else {
-      print("User: $user");
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const Homepage()),
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          // Auto close + navigate
+          Future.delayed(const Duration(seconds: 1), () {
+            Navigator.of(context).pop();
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const Homepage()),
+            );
+          });
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.check_circle, color: Colors.green, size: 60),
+                SizedBox(height: 15),
+                Text(
+                  "Login Successful!",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  "Welcome back!",
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        },
       );
     }
   }
@@ -39,6 +70,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.green.shade50,
       body: Stack(
         children: [
@@ -98,7 +130,7 @@ class _LoginState extends State<Login> {
                   const SizedBox(height: 20),
 
                   const Text(
-                    "GADURA LANDS",
+                    "GARUDA LANDS",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),

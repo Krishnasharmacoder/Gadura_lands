@@ -2818,66 +2818,90 @@ class _NewLandPageState extends State<NewLandPage> {
   // ====================== UI BUILD ======================
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async {
+        bool exitPopup = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Exit New Land"),
+            content: const Text("Do you really want to exit the app?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("No"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Yes"),
+              ),
+            ],
+          ),
+        );
+
+        return exitPopup; // true = exit, false = stay
+      },
+
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 80,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Suresh",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          toolbarHeight: 80,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Suresh",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  "Field Executive",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.green,
-              child: const Icon(Icons.person, color: Colors.white, size: 28),
-            ),
-          ],
+                  SizedBox(height: 4),
+                  Text(
+                    "Field Executive",
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.green,
+                child: const Icon(Icons.person, color: Colors.white, size: 28),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "New Land Details",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            _buildAddressSection(),
-            const SizedBox(height: 40),
-            _buildFarmerDetails(),
-            const SizedBox(height: 40),
-            _buildDisputeSection(),
-            const SizedBox(height: 40),
-            _buildLandDetailsSection(),
-            const SizedBox(height: 40),
-            _buildGpsSection(),
-            const SizedBox(height: 40),
-            _buildDocumentsSection(),
-            const SizedBox(height: 30),
-            _buildSubmitButtons(),
-            const SizedBox(height: 30),
-          ],
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "New Land Details",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              _buildAddressSection(),
+              const SizedBox(height: 40),
+              _buildFarmerDetails(),
+              const SizedBox(height: 40),
+              _buildDisputeSection(),
+              const SizedBox(height: 40),
+              _buildLandDetailsSection(),
+              const SizedBox(height: 40),
+              _buildGpsSection(),
+              const SizedBox(height: 40),
+              _buildDocumentsSection(),
+              const SizedBox(height: 30),
+              _buildSubmitButtons(),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
@@ -2931,10 +2955,16 @@ class _NewLandPageState extends State<NewLandPage> {
         width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: loadingGPS ? null : fetchAddressFromPincode,
-          icon: const Icon(Icons.search),
-          label: const Text("SEARCH PINCODE "),
+          icon: const Icon(Icons.search, color: Colors.black87),
+          label: const Text(
+            "SEARCH PINCODE ",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -2961,7 +2991,7 @@ class _NewLandPageState extends State<NewLandPage> {
       TextFormField(
         controller: villageController,
         decoration: InputDecoration(
-          hintText: "Enter Village Name (or capture GPS to fill)",
+          hintText: "Enter Village Name ",
           prefixIcon: const Icon(Icons.home_outlined),
           filled: true,
           fillColor: Colors.white,
@@ -2975,14 +3005,17 @@ class _NewLandPageState extends State<NewLandPage> {
         width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: loadingGPS ? null : fetchVillageGPSAndAddress,
-          icon: const Icon(Icons.gps_fixed),
+          icon: const Icon(Icons.gps_fixed, color: Colors.black87),
+
           label: Text(
-            loadingGPS
-                ? 'Capturing...'
-                : 'Capture GPS (fills Mandal & Village)',
+            loadingGPS ? 'Capturing...' : 'Capture GPS ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -3325,16 +3358,7 @@ class _NewLandPageState extends State<NewLandPage> {
         style: _outlinedButtonStyle(),
       ),
       const SizedBox(height: 20),
-      _labelWithIcon(
-        "Other Documents (Passbook / Deeds)",
-        Icons.insert_drive_file_outlined,
-      ),
-      ElevatedButton.icon(
-        onPressed: pickMediaAndDocs,
-        icon: const Icon(Icons.upload_file_outlined),
-        label: const Text("Upload Documents"),
-        style: _outlinedButtonStyle(),
-      ),
+
       const SizedBox(height: 12),
       Wrap(
         spacing: 8,

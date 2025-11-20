@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
             // ),
             const SizedBox(height: 20),
             const Text(
-              'Welcome to Gadura Lands',
+              'Welcome to Garuda Lands',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
