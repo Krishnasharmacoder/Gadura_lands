@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gadura_land/Screens/homepage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -19,7 +22,7 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     String user = _userController.text.trim();
     String password = _passwordController.text.trim();
 
@@ -27,43 +30,96 @@ class _LoginState extends State<Login> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
-    } else {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          // Auto close + navigate
-          Future.delayed(const Duration(seconds: 1), () {
-            Navigator.of(context).pop();
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const Homepage()),
-            );
-          });
+      return;
+    }
 
-          return AlertDialog(
+    final url = Uri.parse(
+      "https://garuda-vst-prj.el.r.appspot.com/auth/login-user",
+    );
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"identifier": user, "password": password}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      print(data);
+
+      // SUCCESS LOGIN
+      if (response.statusCode == 200) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        // await prefs.setString("token", data["token"]);
+        await prefs.setString("auth_token", data["token"]);
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            Future.delayed(const Duration(seconds: 1), () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Homepage()),
+              );
+            });
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.green, size: 60),
+                  SizedBox(height: 15),
+                  Text(
+                    "Login Successful!",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    "Welcome back!",
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } else {
+        // ❌ WRONG CREDENTIALS POPUP
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.check_circle, color: Colors.green, size: 60),
-                SizedBox(height: 15),
-                Text(
-                  "Login Successful!",
+              children: [
+                const Icon(Icons.error, color: Colors.red, size: 60),
+                const SizedBox(height: 15),
+                const Text(
+                  "Login Failed!",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 5),
+                const SizedBox(height: 5),
                 Text(
-                  "Welcome back!",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  data["message"] ?? "Wrong username or password",
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
-          );
-        },
-      );
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
 

@@ -4,7 +4,8 @@ import 'package:gadura_land/Auth/login.dart';
 import 'package:gadura_land/onboarding/onboarding.dart';
 import 'package:gadura_land/splash/splash.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
