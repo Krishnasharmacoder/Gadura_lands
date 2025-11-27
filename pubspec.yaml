@@ -41,6 +41,11 @@ dependencies:
   dio: ^5.9.0
   mime: ^2.0.0
   shared_preferences: ^2.5.3
+  flutter_screenutil: ^5.9.3
+  url_launcher: ^6.3.2
+  
+  
+  
 
 
   # The following adds the Cupertino Icons font to your application.

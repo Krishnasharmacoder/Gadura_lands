@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gadura_land/Screens/Bottom%20navigation/profile.dart';
+import 'package:gadura_land/Screens/Bottom%20navigation/session.dart';
 import 'package:gadura_land/Screens/homepage.dart';
 import 'package:gadura_land/Auth/login.dart';
 import 'package:gadura_land/onboarding/onboarding.dart';

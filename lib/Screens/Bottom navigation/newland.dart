@@ -1333,6 +1333,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class NewLandPage extends StatefulWidget {
   const NewLandPage({super.key});
 
+  
   @override
   State<NewLandPage> createState() => _NewLandPageState();
 }
@@ -1744,9 +1745,7 @@ class _NewLandPageState extends State<NewLandPage> {
     setState(() => submitting = true);
 
     try {
-      final uri = Uri.parse(
-        'https://garuda-vst-prj.el.r.appspot.com/agent/land',
-      );
+      final uri = Uri.parse('http://72.61.169.226/agent/land');
       final request = http.MultipartRequest('POST', uri);
 
       // Authorization
@@ -2018,32 +2017,6 @@ class _NewLandPageState extends State<NewLandPage> {
   Widget _buildAddressSection() => _sectionContainer(
     title: "Village Address",
     children: [
-      // State dropdown
-      DropdownButtonFormField<String>(
-        value: selectedState,
-        decoration: _dropdownDecoration("Select State", Icons.location_on),
-        items: states
-            .map((state) => DropdownMenuItem(value: state, child: Text(state)))
-            .toList(),
-        onChanged: (value) => setState(() => selectedState = value),
-      ),
-      const SizedBox(height: 20),
-
-      // District dropdown
-      DropdownButtonFormField<String>(
-        value: selectedDistrict,
-        decoration: _dropdownDecoration(
-          "Select District",
-          Icons.location_city_outlined,
-        ),
-        items: districts
-            .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-            .toList(),
-        onChanged: (value) => setState(() => selectedDistrict = value),
-      ),
-      const SizedBox(height: 20),
-
-      // Pincode
       TextFormField(
         controller: pincodeController,
         keyboardType: TextInputType.number,
@@ -2057,7 +2030,36 @@ class _NewLandPageState extends State<NewLandPage> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         ),
       ),
-      const SizedBox(height: 12),
+
+      SizedBox(height: 20),
+      // State dropdown
+      DropdownButtonFormField<String>(
+        value: selectedState,
+        decoration: _dropdownDecoration(" State", Icons.location_on),
+        icon: SizedBox.shrink(),
+        items: states
+            .map((state) => DropdownMenuItem(value: state, child: Text(state)))
+            .toList(),
+        onChanged: (value) => setState(() => selectedState = value),
+      ),
+      const SizedBox(height: 20),
+
+      // District dropdown
+      DropdownButtonFormField<String>(
+        value: selectedDistrict,
+        decoration: _dropdownDecoration(
+          " District",
+          Icons.location_city_outlined,
+        ),
+        icon: SizedBox.shrink(),
+        items: districts
+            .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+            .toList(),
+        onChanged: (value) => setState(() => selectedDistrict = value),
+      ),
+      const SizedBox(height: 20),
+
+      // Pincode
       SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(

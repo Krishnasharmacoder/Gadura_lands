@@ -479,108 +479,131 @@ class WalletPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Wallet"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const Homepage(),
-              ), // <-- Your homepage
-            );
-          },
+    return WillPopScope(
+      onWillPop: () async {
+        bool exitPopup = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Exit Wallet"),
+            content: const Text("Do you really want to exit the app?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("No"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Yes"),
+              ),
+            ],
+          ),
+        );
+
+        return exitPopup; // true = exit, false = stay
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Wallet"),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const Homepage(),
+                ), // <-- Your homepage
+              );
+            },
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "My Earnings",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              "Review your daily work and earnings.",
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-
-            _summaryCard("Total Due Amount", "₱38", Colors.red),
-            const SizedBox(height: 12),
-            _summaryCard("Total Paid Amount", "₱238", Colors.green),
-
-            const SizedBox(height: 24),
-            const Text(
-              "🚴 Travel Ledger",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            _ledgerItem("25 Jul", "70 km", "₱175", false),
-            _ledgerItem("24 Jul", "45 km", "₱113", true),
-            _ledgerItem("23 Jul", "45 km", "₱113", false),
-
-            const SizedBox(height: 24),
-            const Text(
-              "📋 Land Entry Ledger",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-
-            _landEntryLedgerItem("25 Jul", "Venkatesh Rao", "₱125"),
-            _landEntryLedgerItem("25 Jul", "Lakshmi Devi", "₱125"),
-            _landEntryLedgerItem("24 Jul", "Anand Reddy", "₱125"),
-
-            const SizedBox(height: 24),
-            const Text(
-              "🗓️ 30-Day Due Ledger",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-
-            _dueLedgerItem("24 Jul", "Anand Reddy", "₱125"),
-            _dueLedgerItem("23 Jul", "Sarala", "₱125"),
-
-            const SizedBox(height: 24),
-            const Text(
-              "🗓️ 30-Day Settlement",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "My Earnings",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
-                    "Total Month-End Amount",
-                    style: TextStyle(fontSize: 18, color: Colors.blue),
-                  ),
-                  Text(
-                    "₱250",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+              const SizedBox(height: 4),
+              const Text(
+                "Review your daily work and earnings.",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+
+              _summaryCard("Total Due Amount", "₱38", Colors.red),
+              const SizedBox(height: 12),
+              _summaryCard("Total Paid Amount", "₱238", Colors.green),
+
+              const SizedBox(height: 24),
+              const Text(
+                "🚴 Travel Ledger",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+
+              _ledgerItem("25 Jul", "70 km", "₱175", false),
+              _ledgerItem("24 Jul", "45 km", "₱113", true),
+              _ledgerItem("23 Jul", "45 km", "₱113", false),
+
+              const SizedBox(height: 24),
+              const Text(
+                "📋 Land Entry Ledger",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+
+              _landEntryLedgerItem("25 Jul", "Venkatesh Rao", "₱125"),
+              _landEntryLedgerItem("25 Jul", "Lakshmi Devi", "₱125"),
+              _landEntryLedgerItem("24 Jul", "Anand Reddy", "₱125"),
+
+              const SizedBox(height: 24),
+              const Text(
+                "🗓️ 30-Day Due Ledger",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+
+              _dueLedgerItem("24 Jul", "Anand Reddy", "₱125"),
+              _dueLedgerItem("23 Jul", "Sarala", "₱125"),
+
+              const SizedBox(height: 24),
+              const Text(
+                "🗓️ 30-Day Settlement",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text(
+                      "Total Month-End Amount",
+                      style: TextStyle(fontSize: 18, color: Colors.blue),
                     ),
-                  ),
-                ],
+                    Text(
+                      "₱250",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
