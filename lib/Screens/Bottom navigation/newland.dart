@@ -1873,173 +1873,189 @@ class _NewLandPageState extends State<NewLandPage> {
 
   //---------------- Submit (API integration) ----------------
   Future<void> submitNewLand() async {
-    // basic validations
-    if (villageController.text.isEmpty ||
-        latitudeController.text.isEmpty ||
-        longitudeController.text.isEmpty) {
+  // basic validations
+  if (villageController.text.isEmpty ||
+      latitudeController.text.isEmpty ||
+      longitudeController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please capture GPS/location before submit'),
+      ),
+    );
+    return;
+  }
+
+  setState(() => submitting = true);
+
+  try {
+    final uri = Uri.parse("http://72.61.169.226/field-executive/land");
+    final request = http.MultipartRequest('POST', uri);
+
+    // Authorization
+    if (_apiToken == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please capture GPS/location before submit'),
-        ),
+        SnackBar(content: Text("Token not found. Please login again.")),
       );
+      setState(() => submitting = false);
       return;
     }
 
-    setState(() => submitting = true);
+    request.headers['Authorization'] = 'Bearer $_apiToken';
 
-    try {
-      final uri = Uri.parse("http://72.61.169.226/field-executive/land");
-      final request = http.MultipartRequest('POST', uri);
+    // Add text fields (matching your Postman keys)
+    request.fields['state'] = selectedState ?? '';
+    request.fields['district'] = selectedDistrict ?? '';
+    request.fields['mandal'] = mandalController.text;
+    request.fields['village'] = villageController.text;
+    request.fields['location'] = locationController.text;
+    request.fields['name'] = farmerNameController.text;
+    request.fields['phone'] = phoneController.text;
+    request.fields['whatsapp_number'] = otherWhatsappController.text;
+    request.fields['literacy'] = selectedLiteracy ?? '';
+    request.fields['age_group'] = selectedAgeGroup ?? '';
+    request.fields['nature'] = selectedNature ?? '';
+    request.fields['land_ownership'] = selectedOwnership ?? '';
+    request.fields['mortgage'] = selectedMortgage ?? '';
+    request.fields['land_area'] = landAreaController.text;
+    request.fields['guntas'] = guntasController.text;
+    request.fields['price_per_acre'] = pricePerAcreController.text;
+    request.fields['total_land_price'] = totalLandPriceController.text;
+    request.fields['land_type'] = selectedLandType ?? '';
+    request.fields['water_source'] = selectedWaterSource ?? '';
+    request.fields['garden'] = selectedGarden ?? '';
+    request.fields['shed_details'] = shedDetailsController.text;
+    request.fields['farm_pond'] = selectedFarmPond ?? '';
+    request.fields['residental'] = selectedResidential ?? '';
+    request.fields['fencing'] = selectedFencing ?? '';
+    request.fields['road_path'] = selectedPath ?? '';
+    request.fields['land_location_gps'] =
+        "${latitudeController.text},${longitudeController.text}";
+    request.fields['dispute_type'] = selectedDisputeType ?? '';
+    request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
+    request.fields['path_to_land'] = selectedPath ?? '';
+    
+    // ⭐ NEW: Add latitude and longitude as separate fields
+    request.fields['latitude'] = 
+        "${latitudeController.text},${longitudeController.text}";
+    request.fields['longitude'] = 
+        "${latitudeController.text},${longitudeController.text}";
+    
+    // ⭐ KEY CHANGE: Set status based on isDraft
+    // If isDraft is false (Submit New Land), send "true"
+    // If isDraft is true (Save as Draft), send "false"
+    request.fields['status'] = isDraft ? 'false' : 'true';
 
-      // Authorization
-      //request.headers['Authorization'] = 'Bearer $_apiToken';
-      if (_apiToken == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Token not found. Please login again.")),
-        );
-        return;
-      }
-
-      request.headers['Authorization'] = 'Bearer $_apiToken';
-
-      // Add text fields (matching your Postman keys)
-      if (isDraft = true) {
-        request.fields['state'] = selectedState ?? '';
-        request.fields['district'] = selectedDistrict ?? '';
-        request.fields['mandal'] = mandalController.text;
-        request.fields['village'] = villageController.text;
-        request.fields['location'] = locationController.text;
-        request.fields['name'] = farmerNameController.text;
-        request.fields['phone'] = phoneController.text;
-        request.fields['whatsapp_number'] = otherWhatsappController.text;
-        request.fields['literacy'] = selectedLiteracy ?? ''; //no
-        request.fields['age_group'] = selectedAgeGroup ?? ''; //done
-        request.fields['nature'] = selectedNature ?? ''; //no
-        request.fields['Land_ownership'] = selectedOwnership ?? '';
-        request.fields['mortgage'] = selectedMortgage ?? '';
-        request.fields['land_area'] = landAreaController.text;
-        request.fields['guntas'] = guntasController.text;
-        request.fields['price_per_acre'] = pricePerAcreController.text;
-        request.fields['total_land_price'] = totalLandPriceController.text;
-        request.fields['land_type'] = selectedLandType ?? '';
-        request.fields['water_source'] = selectedWaterSource ?? '';
-        request.fields['garden'] = selectedGarden ?? '';
-        request.fields['shed_details'] = shedDetailsController.text;
-        request.fields['farm_pond'] = selectedFarmPond ?? '';
-        request.fields['residental'] = selectedResidential ?? '';
-        request.fields['fencing'] = selectedFencing ?? '';
-        request.fields['road_path'] = selectedPath ?? '';
-        request.fields['land_location_gps'] =
-            "${latitudeController.text},${longitudeController.text}";
-        request.fields['dispute_type'] = selectedDisputeType ?? '';
-        request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
-        request.fields['path_to_land'] = selectedPath ?? '';
-      }
-      // If you have border points, send them as JSON string under 'land_border_points'
-      if (landBorderPoints.isNotEmpty) {
-        final coords = landBorderPoints
-            .map((p) => {'lat': p.latitude, 'lng': p.longitude})
-            .toList();
-        request.fields['land_border_points'] = jsonEncode(coords);
-      }
-
-      // Attach passbook image if available
-      if (passbookImage != null) {
-        final passbookStream = http.ByteStream(passbookImage!.openRead());
-        final passbookLength = await passbookImage!.length();
-        final multipartFile = http.MultipartFile(
-          'passbook_photo',
-          passbookStream,
-          passbookLength,
-          filename: passbookImage!.path.split('/').last,
-        );
-        request.files.add(multipartFile);
-      }
-
-      // Attach at least one land photo (if available) as 'land_photo'
-      final firstImage = mediaFiles.firstWhere(
-        (f) => _isImageFile(f),
-        orElse: () => File(''),
-      );
-      if (firstImage.path.isNotEmpty && _isImageFile(firstImage)) {
-        final imgStream = http.ByteStream(firstImage.openRead());
-        final imgLen = await firstImage.length();
-        request.files.add(
-          http.MultipartFile(
-            'land_photo',
-            imgStream,
-            imgLen,
-            filename: firstImage.path.split('/').last,
-          ),
-        );
-      }
-
-      // Attach first video (if available) as 'land_video'
-      final firstVideo = mediaFiles.firstWhere(
-        (f) => _isVideoFile(f),
-        orElse: () => File(''),
-      );
-      if (firstVideo.path.isNotEmpty && _isVideoFile(firstVideo)) {
-        final vidStream = http.ByteStream(firstVideo.openRead());
-        final vidLen = await firstVideo.length();
-        request.files.add(
-          http.MultipartFile(
-            'land_video',
-            vidStream,
-            vidLen,
-            filename: firstVideo.path.split('/').last,
-          ),
-        );
-      }
-
-      // Attach remaining media as media_files[] (optional)
-      for (var f in mediaFiles) {
-        // skip the ones we've already added
-        if ((f.path == firstImage.path && _isImageFile(f)) ||
-            (f.path == firstVideo.path && _isVideoFile(f))) {
-          continue;
-        }
-        final stream = http.ByteStream(f.openRead());
-        final len = await f.length();
-        request.files.add(
-          http.MultipartFile(
-            'media_files[]',
-            stream,
-            len,
-            filename: f.path.split('/').last,
-          ),
-        );
-      }
-
-      // Send request
-      final streamed = await request.send();
-      final respStr = await streamed.stream.bytesToString();
-
-      if (streamed.statusCode == 200 || streamed.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Land submitted successfully')),
-        );
-        // Optionally clear form or navigate back
-      } else {
-        debugPrint('API Error ${streamed.statusCode}: $respStr');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Submission failed: ${streamed.statusCode} — ${_shorten(respStr, 200)}',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('submitNewLand error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Submission error: $e')));
-    } finally {
-      setState(() => submitting = false);
+    // If you have border points, send them as JSON string under 'land_border_points'
+    if (landBorderPoints.isNotEmpty) {
+      final coords = landBorderPoints
+          .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+          .toList();
+      request.fields['land_border_points'] = jsonEncode(coords);
     }
-  }
 
+    // Attach passbook image if available
+    if (passbookImage != null) {
+      final passbookStream = http.ByteStream(passbookImage!.openRead());
+      final passbookLength = await passbookImage!.length();
+      final multipartFile = http.MultipartFile(
+        'passbook_photo',
+        passbookStream,
+        passbookLength,
+        filename: passbookImage!.path.split('/').last,
+      );
+      request.files.add(multipartFile);
+    }
+
+    // Attach at least one land photo (if available) as 'land_photo'
+    final firstImage = mediaFiles.firstWhere(
+      (f) => _isImageFile(f),
+      orElse: () => File(''),
+    );
+    if (firstImage.path.isNotEmpty && _isImageFile(firstImage)) {
+      final imgStream = http.ByteStream(firstImage.openRead());
+      final imgLen = await firstImage.length();
+      request.files.add(
+        http.MultipartFile(
+          'land_photo',
+          imgStream,
+          imgLen,
+          filename: firstImage.path.split('/').last,
+        ),
+      );
+    }
+
+    // Attach first video (if available) as 'land_video'
+    final firstVideo = mediaFiles.firstWhere(
+      (f) => _isVideoFile(f),
+      orElse: () => File(''),
+    );
+    if (firstVideo.path.isNotEmpty && _isVideoFile(firstVideo)) {
+      final vidStream = http.ByteStream(firstVideo.openRead());
+      final vidLen = await firstVideo.length();
+      request.files.add(
+        http.MultipartFile(
+          'land_video',
+          vidStream,
+          vidLen,
+          filename: firstVideo.path.split('/').last,
+        ),
+      );
+    }
+
+    // Attach remaining media as media_files[] (optional)
+    for (var f in mediaFiles) {
+      // skip the ones we've already added
+      if ((f.path == firstImage.path && _isImageFile(f)) ||
+          (f.path == firstVideo.path && _isVideoFile(f))) {
+        continue;
+      }
+      final stream = http.ByteStream(f.openRead());
+      final len = await f.length();
+      request.files.add(
+        http.MultipartFile(
+          'media_files[]',
+          stream,
+          len,
+          filename: f.path.split('/').last,
+        ),
+      );
+    }
+
+    // Send request
+    final streamed = await request.send();
+    final respStr = await streamed.stream.bytesToString();
+
+    if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isDraft 
+              ? 'Land saved as draft successfully' 
+              : 'Land submitted successfully'
+          ),
+        ),
+      );
+      // Optionally clear form or navigate back
+      // Navigator.pop(context);
+    } else {
+      debugPrint('API Error ${streamed.statusCode}: $respStr');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Submission failed: ${streamed.statusCode} — ${_shorten(respStr, 200)}',
+          ),
+        ),
+      );
+    }
+  } catch (e) {
+    debugPrint('submitNewLand error: $e');
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Submission error: $e')));
+  } finally {
+    setState(() => submitting = false);
+  }
+}
   // Helper utilities
   bool _isImageFile(File f) {
     final ext = f.path.split('.').last.toLowerCase();

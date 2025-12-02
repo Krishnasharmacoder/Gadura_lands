@@ -797,10 +797,13 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:gadura_land/Screens/Bottom%20navigation/edit_land_details.dart';
 import 'package:http/http.dart' as http;
+// <-- Make sure path is correct
 import 'package:gadura_land/Screens/Bottom navigation/newland.dart';
-import 'package:gadura_land/Screens/homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'landmodel.dart';
 
 class ReviewPage extends StatefulWidget {
   const ReviewPage({super.key});
@@ -813,7 +816,7 @@ class _ReviewPageState extends State<ReviewPage> {
   int selectedIndex = 0; // 0 = Review, 1 = Draft
   bool isLoading = false;
 
-  List<dynamic> landData = [];
+  List<Datum> landList = []; // <-- MODEL LIST
   String? token;
 
   @override
@@ -832,7 +835,7 @@ class _ReviewPageState extends State<ReviewPage> {
   }
 
   // ------------------------------------------------------------
-  // FETCH SUBMITTED LAND
+  // FETCH SUBMITTED LAND (Using Model)
   // ------------------------------------------------------------
   Future<void> fetchSubmitted() async {
     setState(() => isLoading = true);
@@ -844,8 +847,8 @@ class _ReviewPageState extends State<ReviewPage> {
       );
 
       if (response.statusCode == 200) {
-        final jsonBody = jsonDecode(response.body);
-        landData = jsonBody["data"] ?? [];
+        final model = landModelFromJson(response.body);
+        landList = model.data;
       } else {
         showSnack("Error fetching submitted: ${response.statusCode}");
       }
@@ -857,7 +860,7 @@ class _ReviewPageState extends State<ReviewPage> {
   }
 
   // ------------------------------------------------------------
-  // FETCH DRAFT LAND
+  // FETCH DRAFT LAND (Using Model)
   // ------------------------------------------------------------
   Future<void> fetchDrafts() async {
     setState(() => isLoading = true);
@@ -869,8 +872,8 @@ class _ReviewPageState extends State<ReviewPage> {
       );
 
       if (response.statusCode == 200) {
-        final jsonBody = jsonDecode(response.body);
-        landData = jsonBody["data"] ?? [];
+        final model = landModelFromJson(response.body);
+        landList = model.data;
       } else {
         showSnack("Error fetching drafts: ${response.statusCode}");
       }
@@ -889,16 +892,8 @@ class _ReviewPageState extends State<ReviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Review"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const Homepage()),
-            );
-          },
-        ),
       ),
 
       body: Padding(
@@ -922,75 +917,95 @@ class _ReviewPageState extends State<ReviewPage> {
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : landData.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No data found",
-                        style: TextStyle(fontSize: 20),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: landData.length,
-                      itemBuilder: (context, index) {
-                        final land = landData[index];
+                  : landList.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "No data found",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: landList.length,
+                          itemBuilder: (context, index) {
+                            final land = landList[index];
 
-                        return Card(
-                          elevation: 3,
-                          margin: const EdgeInsets.symmetric(vertical: 10),
-                          child: ListTile(
-                            title: Text(
-                              land['land_location']?['village'] ?? "N/A",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(land['farmer_details']?['name'] ?? "N/A"),
-                                Row(
+                            return Card(
+                              elevation: 3,
+                              margin: const EdgeInsets.symmetric(vertical: 10),
+                              child: ListTile(
+                                title: Text(
+                                  land.landLocation.village ?? "N/A",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "${land['land_details']?['land_area'] ?? 'N/A'} acres, "
-                                      "${land['land_details']?['guntas'] ?? 'N/A'} guntas",
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      "${land['land_details']?['total_land_price'] ?? 'N/A'}",
+                                    Text(land.farmerDetails.name ?? "N/A"),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "${land.landDetails.landArea ?? 'N/A'} acres, "
+                                          "${land.landDetails.guntas ?? 'N/A'} guntas",
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          "${land.landDetails.totalLandPrice ?? 'N/A'}",
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
 
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => NewLandPage(landData: land),
-                                  ),
-                                ).then((value) {
-                                  // value = "draft" OR "submitted"
-                                  if (value == "draft") {
-                                    setState(() => selectedIndex = 1);
-                                    fetchDrafts();
-                                  } else if (value == "submitted") {
-                                    setState(() => selectedIndex = 0);
-                                    fetchSubmitted();
-                                  } else {
-                                    selectedIndex == 0
-                                        ? fetchSubmitted()
-                                        : fetchDrafts();
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+trailing: IconButton(
+  icon: const Icon(Icons.edit),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditLandScreen(landData: land),
+      ),
+    ).then((value) {
+      if (value == "submitted") {
+        fetchSubmitted();
+      } else if (value == "draft") {
+        fetchDrafts();
+      }
+    });
+  },
+),
+
+
+                                // trailing: IconButton(
+                                //   icon: const Icon(Icons.edit),
+                                //   onPressed: () {
+                                //     Navigator.push(
+                                //       context,
+                                //       MaterialPageRoute(
+                                //         builder: (_) => NewLandPage(
+                                //           landData: land,
+                                //         ),
+                                //       ),
+                                //     ).then((value) {
+                                //       if (value == "draft") {
+                                //         setState(() => selectedIndex = 1);
+                                //         fetchDrafts();
+                                //       } else if (value == "submitted") {
+                                //         setState(() => selectedIndex = 0);
+                                //         fetchSubmitted();
+                                //       } else {
+                                //         selectedIndex == 0
+                                //             ? fetchSubmitted()
+                                //             : fetchDrafts();
+                                //       }
+                                //     });
+                                //   },
+                                // ),
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
