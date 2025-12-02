@@ -43,6 +43,7 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_screenutil: ^5.9.3
   url_launcher: ^6.3.2
+  path: ^1.9.1
   
   
   

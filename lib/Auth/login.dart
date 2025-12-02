@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gadura_land/Auth/forget_password.dart';
+import 'package:gadura_land/Auth/loginmodel.dart';
+import 'package:gadura_land/Auth/regional.dart';
 import 'package:gadura_land/Screens/homepage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -44,22 +46,34 @@ class _LoginState extends State<Login> {
         body: jsonEncode({"identifier": user, "password": password}),
       );
 
-      final data = jsonDecode(response.body);
-
       if (response.statusCode == 200) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("auth_token", data["token"]);
+        /// ✅ Parse JSON using your LoginModel
+        LoginModel loginData = loginModelFromJson(response.body);
 
+        /// Save token
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString("auth_token", loginData.token);
+
+        final role = loginData.user.role;
+        print(role);
+        await prefs.setString("role", role);
+
+        /// Success Dialog
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (context) {
             Future.delayed(const Duration(seconds: 1), () {
               Navigator.of(context).pop();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Homepage()),
-              );
+
+              if (role == "field executive") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Homepage()),
+                );
+              } else {
+                print("xyz");
+              }
             });
 
             return AlertDialog(
@@ -86,6 +100,9 @@ class _LoginState extends State<Login> {
           },
         );
       } else {
+        /// ❌ Parse failure message (API returns JSON message)
+        Map<String, dynamic> errorBody = jsonDecode(response.body);
+
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -103,7 +120,7 @@ class _LoginState extends State<Login> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  data["message"] ?? "Wrong username or password",
+                  errorBody["message"] ?? "Wrong username or password",
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),

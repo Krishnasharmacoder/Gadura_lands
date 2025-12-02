@@ -640,7 +640,7 @@ class _LogExpensesPageState extends State<LogExpensesPage> {
     setState(() => isLoading = true);
 
     final url = Uri.parse(
-      "http://72.61.169.226/agent/update/session/${widget.sessionId}",
+      "http://72.61.169.226/field-executive/update/session/${widget.sessionId}",
     );
 
     SharedPreferences prefs = await SharedPreferences.getInstance();

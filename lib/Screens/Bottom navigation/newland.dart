@@ -1321,6 +1321,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:gadura_land/Screens/homepage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -1331,9 +1332,10 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NewLandPage extends StatefulWidget {
-  const NewLandPage({super.key});
+  //const NewLandPage({super.key});
+  final Map<String, dynamic>? landData; // 👈 receive data here
 
-  
+  const NewLandPage({super.key, this.landData});
   @override
   State<NewLandPage> createState() => _NewLandPageState();
 }
@@ -1344,11 +1346,17 @@ class _NewLandPageState extends State<NewLandPage> {
   // static const String _apiToken =
   //     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidW5pcXVlX2lkIjoiYWdlbnQwIiwiZW1haWwiOiJhZ2VudEBnbWFpbC5jb20iLCJyb2xlIjoiYWdlbnQiLCJpYXQiOjE3NjM3MDg4ODUsImV4cCI6MTc2NDMxMzY4NX0.pTdY0V5mG-5qo3rI9NobV36CnrjPdgqx6Y7REZuc3NY';
   String? _apiToken;
+  bool get isEditMode => widget.landData != null;
+  bool isDraft = false;
 
   @override
   void initState() {
     super.initState();
     loadToken();
+
+    if (widget.landData != null) {
+      fillEditData(widget.landData!);
+    }
   }
 
   Future<void> loadToken() async {
@@ -1441,6 +1449,141 @@ class _NewLandPageState extends State<NewLandPage> {
       return false;
     }
     return true;
+  }
+
+  void fillEditData(Map<String, dynamic> data) {
+    // Location
+    pincodeController.text = data['land_location']['pincode']?.toString() ?? '';
+    villageController.text = data['land_location']['village'] ?? '';
+    mandalController.text = data['land_location']['mandal'] ?? '';
+    latitudeController.text =
+        data['land_location']['latitude']?.toString() ?? '';
+    longitudeController.text =
+        data['land_location']['longitude']?.toString() ?? '';
+
+    // FARMER DETAILS
+    farmerNameController.text = data['farmer_details']['name'] ?? '';
+    phoneController.text = data['farmer_details']['phone'] ?? '';
+    otherWhatsappController.text = data['farmer_details']['whatsapp'] ?? '';
+
+    // LAND DETAILS
+    landAreaController.text =
+        data['land_details']['land_area']?.toString() ?? '';
+    guntasController.text = data['land_details']['guntas']?.toString() ?? '';
+    pricePerAcreController.text =
+        data['land_details']['price_per_acre']?.toString() ?? '';
+    totalLandPriceController.text =
+        data['land_details']['total_land_price']?.toString() ?? '';
+
+    // Dropdown selections
+    selectedState = data['land_location']['state'];
+    selectedDistrict = data['land_location']['district'];
+    selectedLiteracy = data['farmer_details']['literacy_status'];
+    selectedAgeGroup = data['farmer_details']['age_group'];
+    selectedNature = data['land_details']['nature'];
+    selectedOwnership = data['land_details']['ownership'];
+    selectedMortgage = data['land_details']['mortgage'];
+    selectedDisputeType = data['land_details']['dispute_type'];
+    selectedSibling = data['land_details']['siblings'];
+    selectedPath = data['land_details']['road_path'];
+    selectedLandType = data['land_details']['land_type'];
+    selectedWaterSource = data['land_details']['water_source'];
+    selectedGarden = data['land_details']['garden'];
+    selectedShed = data['land_details']['shed'];
+    selectedFarmPond = data['land_details']['farm_pond'];
+    selectedResidential = data['land_details']['residential'];
+    selectedFencing = data['land_details']['fencing'];
+  }
+
+  Future<void> saveEditedLand() async {
+    if (_apiToken == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Token not found")));
+      return;
+    }
+
+    if (widget.landData == null) return;
+
+    setState(() => submitting = true);
+
+    try {
+      final landId =
+          widget.landData!['id']; // ya widget.landData!['land_id'] jo unique ho
+      final uri = Uri.parse(
+        "http://72.61.169.226/field-executive/land/$landId",
+      );
+      final request = http.MultipartRequest('PUT', uri);
+
+      request.headers['Authorization'] = 'Bearer $_apiToken';
+
+      // Add all form fields just like submitNewLand
+      request.fields['state'] = selectedState ?? '';
+      request.fields['district'] = selectedDistrict ?? '';
+      request.fields['mandal'] = mandalController.text;
+      request.fields['village'] = villageController.text;
+      request.fields['location'] = locationController.text;
+      request.fields['name'] = farmerNameController.text;
+      request.fields['phone'] = phoneController.text;
+      request.fields['whatsapp_number'] = otherWhatsappController.text;
+      request.fields['literacy'] = selectedLiteracy ?? '';
+      request.fields['age_group'] = selectedAgeGroup ?? '';
+      request.fields['nature'] = selectedNature ?? '';
+      request.fields['land_ownership'] = selectedOwnership ?? '';
+      request.fields['mortgage'] = selectedMortgage ?? '';
+      request.fields['land_area'] = landAreaController.text;
+      request.fields['guntas'] = guntasController.text;
+      request.fields['price_per_acre'] = pricePerAcreController.text;
+      request.fields['total_land_price'] = totalLandPriceController.text;
+      request.fields['land_type'] = selectedLandType ?? '';
+      request.fields['water_source'] = selectedWaterSource ?? '';
+      request.fields['garden'] = selectedGarden ?? '';
+      request.fields['shed_details'] = shedDetailsController.text;
+      request.fields['farm_pond'] = selectedFarmPond ?? '';
+      request.fields['residental'] = selectedResidential ?? '';
+      request.fields['fencing'] = selectedFencing ?? '';
+      request.fields['road_path'] = selectedPath ?? '';
+      request.fields['land_location_gps'] =
+          "${latitudeController.text},${longitudeController.text}";
+      request.fields['dispute_type'] = selectedDisputeType ?? '';
+      request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
+      request.fields['path_to_land'] = selectedPath ?? '';
+
+      // Add images/videos same as submitNewLand
+      // Example:
+      if (passbookImage != null) {
+        final stream = http.ByteStream(passbookImage!.openRead());
+        final length = await passbookImage!.length();
+        request.files.add(
+          http.MultipartFile(
+            'passbook_photo',
+            stream,
+            length,
+            filename: passbookImage!.path.split('/').last,
+          ),
+        );
+      }
+
+      // Send request
+      final streamed = await request.send();
+      final respStr = await streamed.stream.bytesToString();
+
+      if (streamed.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Land updated successfully")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Update failed: ${streamed.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+    } finally {
+      setState(() => submitting = false);
+    }
   }
 
   // ---------------- Capture GPS -> only fill mandal & village (and lat/lng) ----------------
@@ -1728,7 +1871,7 @@ class _NewLandPageState extends State<NewLandPage> {
     }
   }
 
-  // ---------------- Submit (API integration) ----------------
+  //---------------- Submit (API integration) ----------------
   Future<void> submitNewLand() async {
     // basic validations
     if (villageController.text.isEmpty ||
@@ -1745,7 +1888,7 @@ class _NewLandPageState extends State<NewLandPage> {
     setState(() => submitting = true);
 
     try {
-      final uri = Uri.parse('http://72.61.169.226/agent/land');
+      final uri = Uri.parse("http://72.61.169.226/field-executive/land");
       final request = http.MultipartRequest('POST', uri);
 
       // Authorization
@@ -1760,37 +1903,38 @@ class _NewLandPageState extends State<NewLandPage> {
       request.headers['Authorization'] = 'Bearer $_apiToken';
 
       // Add text fields (matching your Postman keys)
-      request.fields['state'] = selectedState ?? '';
-      request.fields['district'] = selectedDistrict ?? '';
-      request.fields['mandal'] = mandalController.text;
-      request.fields['village'] = villageController.text;
-      request.fields['location'] = locationController.text;
-      request.fields['name'] = farmerNameController.text;
-      request.fields['phone'] = phoneController.text;
-      request.fields['whatsapp_number'] = otherWhatsappController.text;
-      request.fields['literacy'] = selectedLiteracy ?? '';
-      request.fields['age_group'] = selectedAgeGroup ?? '';
-      request.fields['nature'] = selectedNature ?? '';
-      request.fields['land_ownership'] = selectedOwnership ?? '';
-      request.fields['mortgage'] = selectedMortgage ?? '';
-      request.fields['land_area'] = landAreaController.text;
-      request.fields['guntas'] = guntasController.text;
-      request.fields['price_per_acre'] = pricePerAcreController.text;
-      request.fields['total_land_price'] = totalLandPriceController.text;
-      request.fields['land_type'] = selectedLandType ?? '';
-      request.fields['water_source'] = selectedWaterSource ?? '';
-      request.fields['garden'] = selectedGarden ?? '';
-      request.fields['shed_details'] = shedDetailsController.text;
-      request.fields['farm_pond'] = selectedFarmPond ?? '';
-      request.fields['residental'] = selectedResidential ?? '';
-      request.fields['fencing'] = selectedFencing ?? '';
-      request.fields['road_path'] = selectedPath ?? '';
-      request.fields['land_location_gps'] =
-          "${latitudeController.text},${longitudeController.text}";
-      request.fields['dispute_type'] = selectedDisputeType ?? '';
-      request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
-      request.fields['path_to_land'] = selectedPath ?? '';
-
+      if (isDraft = true) {
+        request.fields['state'] = selectedState ?? '';
+        request.fields['district'] = selectedDistrict ?? '';
+        request.fields['mandal'] = mandalController.text;
+        request.fields['village'] = villageController.text;
+        request.fields['location'] = locationController.text;
+        request.fields['name'] = farmerNameController.text;
+        request.fields['phone'] = phoneController.text;
+        request.fields['whatsapp_number'] = otherWhatsappController.text;
+        request.fields['literacy'] = selectedLiteracy ?? ''; //no
+        request.fields['age_group'] = selectedAgeGroup ?? ''; //done
+        request.fields['nature'] = selectedNature ?? ''; //no
+        request.fields['Land_ownership'] = selectedOwnership ?? '';
+        request.fields['mortgage'] = selectedMortgage ?? '';
+        request.fields['land_area'] = landAreaController.text;
+        request.fields['guntas'] = guntasController.text;
+        request.fields['price_per_acre'] = pricePerAcreController.text;
+        request.fields['total_land_price'] = totalLandPriceController.text;
+        request.fields['land_type'] = selectedLandType ?? '';
+        request.fields['water_source'] = selectedWaterSource ?? '';
+        request.fields['garden'] = selectedGarden ?? '';
+        request.fields['shed_details'] = shedDetailsController.text;
+        request.fields['farm_pond'] = selectedFarmPond ?? '';
+        request.fields['residental'] = selectedResidential ?? '';
+        request.fields['fencing'] = selectedFencing ?? '';
+        request.fields['road_path'] = selectedPath ?? '';
+        request.fields['land_location_gps'] =
+            "${latitudeController.text},${longitudeController.text}";
+        request.fields['dispute_type'] = selectedDisputeType ?? '';
+        request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
+        request.fields['path_to_land'] = selectedPath ?? '';
+      }
       // If you have border points, send them as JSON string under 'land_border_points'
       if (landBorderPoints.isNotEmpty) {
         final coords = landBorderPoints
@@ -2383,14 +2527,14 @@ class _NewLandPageState extends State<NewLandPage> {
         (val) => setState(() => selectedPath = val),
       ),
       const SizedBox(height: 20),
-      ElevatedButton.icon(
-        onPressed: () {
-          openMapForBorder();
-        },
-        icon: const Icon(Icons.route_outlined),
-        label: const Text("Record a Path"),
-        style: _outlinedButtonStyle(),
-      ),
+      // ElevatedButton.icon(
+      //   onPressed: () {
+      //     openMapForBorder();
+      //   },
+      //   icon: const Icon(Icons.route_outlined),
+      //   label: const Text("Record a Path"),
+      //   style: _outlinedButtonStyle(),
+      // ),
       const SizedBox(height: 20),
       _labelWithIcon(
         "Land Entry Point (Coordinates)",
@@ -2425,13 +2569,13 @@ class _NewLandPageState extends State<NewLandPage> {
         style: _outlinedButtonStyle(),
       ),
       const SizedBox(height: 20),
-      _labelWithIcon("Land Border", Icons.map_outlined),
-      ElevatedButton.icon(
-        onPressed: openMapForBorder,
-        icon: const Icon(Icons.map_outlined),
-        label: const Text("Draw Land Border"),
-        style: _outlinedButtonStyle(),
-      ),
+      // _labelWithIcon("Land Border", Icons.map_outlined),
+      // ElevatedButton.icon(
+      //   onPressed: openMapForBorder,
+      //   icon: const Icon(Icons.map_outlined),
+      //   label: const Text("Draw Land Border"),
+      //   style: _outlinedButtonStyle(),
+      // ),
       if (landBorderPoints.isNotEmpty) ...[
         const SizedBox(height: 12),
         Text("Border points: ${landBorderPoints.length}"),
@@ -2519,32 +2663,59 @@ class _NewLandPageState extends State<NewLandPage> {
     ],
   );
 
-  // ====================== Submit Buttons ======================
   Widget _buildSubmitButtons() => Column(
     children: [
-      ElevatedButton.icon(
-        onPressed: submitNewLand,
-        icon: const Icon(Icons.cloud_upload_outlined),
-        label: const Text("Submit New Land"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green.shade700,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(55),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      // ------------------ Submit New Land ------------------
+      if (!isEditMode)
+        ElevatedButton.icon(
+          onPressed: () {
+            isDraft = false; // ⭐ SUBMIT
+            submitNewLand();
+          },
+          icon: const Icon(Icons.cloud_upload_outlined),
+          label: const Text("Submit New Land"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade700,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(55),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
-      ),
+
+      // ------------------ Update Land ------------------
+      if (isEditMode)
+        ElevatedButton.icon(
+          onPressed: () {
+            isDraft = false; // ⭐ UPDATE = submitted
+            submitNewLand();
+          },
+          icon: const Icon(Icons.save_outlined),
+          label: const Text("Update Land"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue.shade700,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(55),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+
       const SizedBox(height: 15),
+
+      // ------------------ Save as Draft ------------------
       ElevatedButton.icon(
-        onPressed: () => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Saved as draft (mock)'))),
-        icon: const Icon(Icons.save_outlined),
+        onPressed: () {
+          isDraft = true; // ⭐ DRAFT
+          submitNewLand();
+        },
+        icon: const Icon(Icons.save_alt_outlined),
         label: const Text("Save as Draft"),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey.shade200,
-          foregroundColor: Colors.black,
+          backgroundColor: Colors.grey.shade600,
+          foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(55),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
