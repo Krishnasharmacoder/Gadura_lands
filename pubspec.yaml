@@ -44,6 +44,9 @@ dependencies:
   flutter_screenutil: ^5.9.3
   url_launcher: ^6.3.2
   path: ^1.9.1
+  syncfusion_flutter_charts: ^31.2.16
+  fl_chart: ^1.1.1
+  pull_to_refresh: ^2.0.0
   
   
   

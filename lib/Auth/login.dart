@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gadura_land/Auth/forget_password.dart';
 import 'package:gadura_land/Auth/loginmodel.dart';
-import 'package:gadura_land/Auth/regional.dart';
 import 'package:gadura_land/Screens/homepage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -72,7 +71,7 @@ class _LoginState extends State<Login> {
                   MaterialPageRoute(builder: (context) => const Homepage()),
                 );
               } else {
-                print("xyz");
+                print("exz");
               }
             });
 
