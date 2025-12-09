@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:gadura_land/Screens/Bottom%20navigation/profile.dart';
-import 'package:gadura_land/Screens/Bottom%20navigation/session.dart';
+import 'package:gadura_land/Screens/FieldExecutive/profile.dart';
+import 'package:gadura_land/Screens/FieldExecutive/session.dart';
+import 'package:gadura_land/Screens/Regional/regionalhomepage.dart';
+import 'package:gadura_land/Screens/Regional/regionalwork.dart';
 import 'package:gadura_land/Screens/homepage.dart';
 import 'package:gadura_land/Auth/login.dart';
 import 'package:gadura_land/onboarding/onboarding.dart';

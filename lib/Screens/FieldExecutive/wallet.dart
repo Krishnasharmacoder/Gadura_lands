@@ -2350,14 +2350,12 @@ class _WalletPageState extends State<WalletPage> {
   // ----------------------------------------------------------
   // TRAVEL LEDGER TABLE
   // ----------------------------------------------------------
+
   Widget _travelLedgerTable(Map<String, dynamic> data) {
-    // Try multiple possible keys for records
     List<dynamic> travelRecords =
         data['records'] ?? data['data'] ?? data['travel_records'] ?? [];
 
-    // If no records found, check for direct data
     if (travelRecords.isEmpty && data.isNotEmpty) {
-      // Check if data itself is a list
       if (data['success'] != null && data['data'] is List) {
         travelRecords = data['data'];
       }
@@ -2372,22 +2370,32 @@ class _WalletPageState extends State<WalletPage> {
           "Paid Status",
         ]),
         _tableDivider(),
-        if (travelRecords.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(child: Text("No travel records found")),
-          )
-        else
-          ...travelRecords.take(10).map((record) {
-            return _travelRow(
-              record['date']?.toString().substring(0, 10) ?? 'N/A',
-              '${record['total_km']?.toString() ?? '0'} km',
-              '₱${record['amount']?.toString() ?? '0'}',
-              record['status']?.toString() ??
-                  record['payment_status']?.toString() ??
-                  'Pending',
-            );
-          }).toList(),
+
+        // 🔥 Scroll Added Here
+        SizedBox(
+          height: 300, // jitni height chahiye set kar sakte ho
+          child: SingleChildScrollView(
+            child: Column(
+              children: travelRecords.isEmpty
+                  ? [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(child: Text("No travel records found")),
+                      ),
+                    ]
+                  : travelRecords.take(10).map((record) {
+                      return _travelRow(
+                        record['date']?.toString().substring(0, 10) ?? 'N/A',
+                        '${record['total_km']?.toString() ?? '0'} km',
+                        '₱${record['amount']?.toString() ?? '0'}',
+                        record['status']?.toString() ??
+                            record['payment_status']?.toString() ??
+                            'Pending',
+                      );
+                    }).toList(),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -2417,15 +2425,12 @@ class _WalletPageState extends State<WalletPage> {
 
   // ----------------------------------------------------------
   // LAND ENTRY LEDGER TABLE
-  // ----------------------------------------------------------
+
   Widget _landEntryLedgerTable(Map<String, dynamic> data) {
-    // Try multiple possible keys for records
     List<dynamic> landRecords =
         data['records'] ?? data['data'] ?? data['land_records'] ?? [];
 
-    // If no records found, check for direct data
     if (landRecords.isEmpty && data.isNotEmpty) {
-      // Check if data itself is a list
       if (data['success'] != null && data['data'] is List) {
         landRecords = data['data'];
       }
@@ -2441,29 +2446,41 @@ class _WalletPageState extends State<WalletPage> {
           "Paid Status",
         ]),
         _tableDivider(),
-        if (landRecords.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(child: Text("No land entry records found")),
-          )
-        else
-          ...landRecords.take(10).map((record) {
-            return _landRow(
-              record['date']?.toString().substring(0, 10) ??
-                  record['created_at']?.toString().substring(0, 10) ??
-                  'N/A',
-              record['farmer_name']?.toString() ??
-                  record['land_owner']?.toString() ??
-                  'Unknown',
-              record['verification_status']?.toString() ??
-                  record['status']?.toString() ??
-                  'Pending',
-              '₱${record['amount']?.toString() ?? record['work_amount']?.toString() ?? '0'}',
-              record['payment_status']?.toString() ??
-                  record['status']?.toString() ??
-                  'Pending',
-            );
-          }).toList(),
+
+        // 🔥 Scroll Added Here
+        SizedBox(
+          height: 300, // yahan apni desired height rakh sakte ho
+          child: SingleChildScrollView(
+            child: Column(
+              children: landRecords.isEmpty
+                  ? [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Text("No land entry records found"),
+                        ),
+                      ),
+                    ]
+                  : landRecords.take(10).map((record) {
+                      return _landRow(
+                        record['date']?.toString().substring(0, 10) ??
+                            record['created_at']?.toString().substring(0, 10) ??
+                            'N/A',
+                        record['farmer_name']?.toString() ??
+                            record['land_owner']?.toString() ??
+                            'Unknown',
+                        record['verification_status']?.toString() ??
+                            record['status']?.toString() ??
+                            'Pending',
+                        '₱${record['amount']?.toString() ?? record['work_amount']?.toString() ?? '0'}',
+                        record['payment_status']?.toString() ??
+                            record['status']?.toString() ??
+                            'Pending',
+                      );
+                    }).toList(),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -2496,14 +2513,12 @@ class _WalletPageState extends State<WalletPage> {
   // ----------------------------------------------------------
   // DUE LEDGER TABLE
   // ----------------------------------------------------------
+
   Widget _dueLedgerTable(Map<String, dynamic> data) {
-    // Try multiple possible keys for records
     List<dynamic> dueRecords =
         data['records'] ?? data['data'] ?? data['due_records'] ?? [];
 
-    // If no records found, check for direct data
     if (dueRecords.isEmpty && data.isNotEmpty) {
-      // Check if data itself is a list
       if (data['success'] != null && data['data'] is List) {
         dueRecords = data['data'];
       }
@@ -2519,26 +2534,36 @@ class _WalletPageState extends State<WalletPage> {
           "Paid Status",
         ]),
         _tableDivider(),
-        if (dueRecords.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(child: Text("No due records found")),
-          )
-        else
-          ...dueRecords.take(10).map((record) {
-            return _dueRow(
-              record['date']?.toString().substring(0, 10) ??
-                  record['due_date']?.toString().substring(0, 10) ??
-                  'N/A',
-              record['farmer_name']?.toString() ??
-                  record['land_owner']?.toString() ??
-                  'Unknown',
-              '₱${record['amount']?.toString() ?? record['due_amount']?.toString() ?? '0'}',
-              record['payment_status']?.toString() ??
-                  record['status']?.toString() ??
-                  'Pending',
-            );
-          }).toList(),
+
+        // 🔥 Scroll Added
+        SizedBox(
+          height: 300, // jitni height chahiye set kar sakte ho
+          child: SingleChildScrollView(
+            child: Column(
+              children: dueRecords.isEmpty
+                  ? [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(child: Text("No due records found")),
+                      ),
+                    ]
+                  : dueRecords.take(10).map((record) {
+                      return _dueRow(
+                        record['date']?.toString().substring(0, 10) ??
+                            record['due_date']?.toString().substring(0, 10) ??
+                            'N/A',
+                        record['farmer_name']?.toString() ??
+                            record['land_owner']?.toString() ??
+                            'Unknown',
+                        '₱${record['amount']?.toString() ?? record['due_amount']?.toString() ?? '0'}',
+                        record['payment_status']?.toString() ??
+                            record['status']?.toString() ??
+                            'Pending',
+                      );
+                    }).toList(),
+            ),
+          ),
+        ),
       ],
     );
   }

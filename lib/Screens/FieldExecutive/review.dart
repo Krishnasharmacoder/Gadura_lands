@@ -1058,10 +1058,10 @@
 import 'dart:async'; // Add this at the top
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:gadura_land/Screens/Bottom%20navigation/edit_land_details.dart';
+import 'package:gadura_land/Screens/FieldExecutive/edit_land_details.dart';
 import 'package:gadura_land/Screens/homepage.dart';
 import 'package:http/http.dart' as http;
-import 'package:gadura_land/Screens/Bottom navigation/newland.dart';
+import 'package:gadura_land/Screens/FieldExecutive/newland.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'landmodel.dart';

@@ -5667,6 +5667,193 @@ class _NewLandPageState extends State<NewLandPage> {
   }
 
   // ---------------- Submit (API integration) ----------------
+  // Future<void> submitNewLand() async {
+  //   if (villageController.text.isEmpty ||
+  //       latitudeController.text.isEmpty ||
+  //       longitudeController.text.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Please capture GPS/location before submit'),
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   setState(() => submitting = true);
+
+  //   try {
+  //     final uri = Uri.parse("http://72.61.169.226/field-executive/land");
+  //     final request = http.MultipartRequest('POST', uri);
+
+  //     if (_apiToken == null) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text("Token not found. Please login again.")),
+  //       );
+  //       setState(() => submitting = false);
+  //       return;
+  //     }
+
+  //     request.headers['Authorization'] = 'Bearer $_apiToken';
+
+  //     // Add text fields
+  //     request.fields['state'] = selectedState ?? '';
+  //     request.fields['district'] = selectedDistrict ?? '';
+  //     request.fields['mandal'] = mandalController.text;
+  //     request.fields['village'] = villageController.text;
+  //     request.fields['location'] = locationController.text;
+  //     request.fields['name'] = farmerNameController.text;
+  //     request.fields['phone'] = phoneController.text;
+  //     request.fields['whatsapp_number'] = otherWhatsappController.text;
+  //     request.fields['literacy'] = selectedLiteracy ?? '';
+  //     request.fields['age_group'] = selectedAgeGroup ?? '';
+  //     request.fields['nature'] = selectedNature ?? '';
+  //     request.fields['land_ownership'] = selectedOwnership ?? '';
+  //     request.fields['mortgage'] = selectedMortgage ?? '';
+  //     request.fields['land_area'] = landAreaController.text;
+  //     request.fields['guntas'] = guntasController.text;
+  //     request.fields['price_per_acre'] = pricePerAcreController.text;
+  //     request.fields['total_land_price'] = totalLandPriceController.text;
+  //     request.fields['land_type'] = selectedLandType ?? '';
+
+  //     // 🆕 MULTIPLE SELECTIONS - Join with comma
+  //     request.fields['water_source'] = selectedWaterSources.join(',');
+  //     request.fields['garden'] = selectedGardens.join(',');
+  //     request.fields['shed'] = selectedSheds.join(',');
+  //     request.fields['farm_pond'] = selectedFarmPonds.join(',');
+
+  //     request.fields['shed_details'] = shedDetailsController.text;
+  //     request.fields['residental'] = selectedResidential ?? '';
+  //     request.fields['fencing'] = selectedFencing ?? '';
+  //     request.fields['road_path'] = selectedPath ?? '';
+  //     request.fields['land_location_gps'] =
+  //         "${latitudeController.text},${longitudeController.text}";
+  //     request.fields['dispute_type'] = selectedDisputeType ?? '';
+  //     request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
+  //     request.fields['path_to_land'] = selectedPath ?? '';
+  //     request.fields['latitude'] =
+  //         "${latitudeController.text},${longitudeController.text}";
+  //     request.fields['longitude'] =
+  //         "${latitudeController.text},${longitudeController.text}";
+  //     request.fields['status'] = isDraft ? 'false' : 'true';
+
+  //     if (landBorderPoints.isNotEmpty) {
+  //       final coords = landBorderPoints
+  //           .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+  //           .toList();
+  //       request.fields['land_border_points'] = jsonEncode(coords);
+  //     }
+
+  //     // Attach passbook image
+  //     if (passbookImage != null) {
+  //       final passbookStream = http.ByteStream(passbookImage!.openRead());
+  //       final passbookLength = await passbookImage!.length();
+  //       request.files.add(
+  //         http.MultipartFile(
+  //           'passbook_photo',
+  //           passbookStream,
+  //           passbookLength,
+  //           filename: passbookImage!.path.split('/').last,
+  //         ),
+  //       );
+  //     }
+
+  //     // Attach media files
+  //     final firstImage = mediaFiles.firstWhere(
+  //       (f) => _isImageFile(f),
+  //       orElse: () => File(''),
+  //     );
+  //     if (firstImage.path.isNotEmpty && _isImageFile(firstImage)) {
+  //       final imgStream = http.ByteStream(firstImage.openRead());
+  //       final imgLen = await firstImage.length();
+  //       request.files.add(
+  //         http.MultipartFile(
+  //           'land_photo',
+  //           imgStream,
+  //           imgLen,
+  //           filename: firstImage.path.split('/').last,
+  //         ),
+  //       );
+  //     }
+
+  //     final firstVideo = mediaFiles.firstWhere(
+  //       (f) => _isVideoFile(f),
+  //       orElse: () => File(''),
+  //     );
+  //     if (firstVideo.path.isNotEmpty && _isVideoFile(firstVideo)) {
+  //       final vidStream = http.ByteStream(firstVideo.openRead());
+  //       final vidLen = await firstVideo.length();
+  //       request.files.add(
+  //         http.MultipartFile(
+  //           'land_video',
+  //           vidStream,
+  //           vidLen,
+  //           filename: firstVideo.path.split('/').last,
+  //         ),
+  //       );
+  //     }
+
+  //     for (var f in mediaFiles) {
+  //       if ((f.path == firstImage.path && _isImageFile(f)) ||
+  //           (f.path == firstVideo.path && _isVideoFile(f))) {
+  //         continue;
+  //       }
+  //       final stream = http.ByteStream(f.openRead());
+  //       final len = await f.length();
+  //       request.files.add(
+  //         http.MultipartFile(
+  //           'media_files[]',
+  //           stream,
+  //           len,
+  //           filename: f.path.split('/').last,
+  //         ),
+  //       );
+  //     }
+
+  //     // Send request
+  //     final streamed = await request.send();
+  //     final respStr = await streamed.stream.bytesToString();
+
+  //     if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             isDraft
+  //                 ? 'Land saved as draft successfully'
+  //                 : 'Land submitted successfully',
+  //           ),
+  //         ),
+  //       );
+
+  //       // ✅✅✅ FORM RESET करें - नया land submit करने के बाद
+  //       if (!isEditMode) {
+  //         _resetForm();
+  //       } else {
+  //         // Edit mode में, success message show करें और पिछले screen पर वापस जाएँ
+  //         Future.delayed(const Duration(milliseconds: 1500), () {
+  //           Navigator.pop(context);
+  //         });
+  //       }
+  //     } else {
+  //       debugPrint('API Error ${streamed.statusCode}: $respStr');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Submission failed: ${streamed.statusCode} — ${_shorten(respStr, 200)}',
+  //           ),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     debugPrint('submitNewLand error: $e');
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text('Submission error: $e')));
+  //   } finally {
+  //     setState(() => submitting = false);
+  //   }
+  // }
+
+  // ---------------- Submit (API integration) ----------------
   Future<void> submitNewLand() async {
     if (villageController.text.isEmpty ||
         latitudeController.text.isEmpty ||
@@ -5730,10 +5917,8 @@ class _NewLandPageState extends State<NewLandPage> {
       request.fields['dispute_type'] = selectedDisputeType ?? '';
       request.fields['siblings_involve_in_dispute'] = selectedSibling ?? '';
       request.fields['path_to_land'] = selectedPath ?? '';
-      request.fields['latitude'] =
-          "${latitudeController.text},${longitudeController.text}";
-      request.fields['longitude'] =
-          "${latitudeController.text},${longitudeController.text}";
+      request.fields['latitude'] = latitudeController.text;
+      request.fields['longitude'] = longitudeController.text;
       request.fields['status'] = isDraft ? 'false' : 'true';
 
       if (landBorderPoints.isNotEmpty) {
@@ -5743,70 +5928,124 @@ class _NewLandPageState extends State<NewLandPage> {
         request.fields['land_border_points'] = jsonEncode(coords);
       }
 
-      // Attach passbook image
-      if (passbookImage != null) {
-        final passbookStream = http.ByteStream(passbookImage!.openRead());
-        final passbookLength = await passbookImage!.length();
-        request.files.add(
-          http.MultipartFile(
-            'passbook_photo',
-            passbookStream,
-            passbookLength,
-            filename: passbookImage!.path.split('/').last,
-          ),
-        );
-      }
-
-      // Attach media files
-      final firstImage = mediaFiles.firstWhere(
-        (f) => _isImageFile(f),
-        orElse: () => File(''),
-      );
-      if (firstImage.path.isNotEmpty && _isImageFile(firstImage)) {
-        final imgStream = http.ByteStream(firstImage.openRead());
-        final imgLen = await firstImage.length();
-        request.files.add(
-          http.MultipartFile(
-            'land_photo',
-            imgStream,
-            imgLen,
-            filename: firstImage.path.split('/').last,
-          ),
-        );
-      }
-
-      final firstVideo = mediaFiles.firstWhere(
-        (f) => _isVideoFile(f),
-        orElse: () => File(''),
-      );
-      if (firstVideo.path.isNotEmpty && _isVideoFile(firstVideo)) {
-        final vidStream = http.ByteStream(firstVideo.openRead());
-        final vidLen = await firstVideo.length();
-        request.files.add(
-          http.MultipartFile(
-            'land_video',
-            vidStream,
-            vidLen,
-            filename: firstVideo.path.split('/').last,
-          ),
-        );
-      }
-
-      for (var f in mediaFiles) {
-        if ((f.path == firstImage.path && _isImageFile(f)) ||
-            (f.path == firstVideo.path && _isVideoFile(f))) {
-          continue;
+      // FIX 1: Attach passbook image - check if file exists first
+      if (passbookImage != null && await passbookImage!.exists()) {
+        try {
+          final passbookStream = http.ByteStream(passbookImage!.openRead());
+          final passbookLength = await passbookImage!.length();
+          request.files.add(
+            http.MultipartFile(
+              'passbook_photo',
+              passbookStream,
+              passbookLength,
+              filename: passbookImage!.path.split('/').last,
+            ),
+          );
+          debugPrint('Passbook photo added: ${passbookImage!.path}');
+        } catch (e) {
+          debugPrint('Error adding passbook photo: $e');
         }
-        final stream = http.ByteStream(f.openRead());
-        final len = await f.length();
-        request.files.add(
-          http.MultipartFile(
-            'media_files[]',
-            stream,
-            len,
-            filename: f.path.split('/').last,
-          ),
-        );
+      }
+
+      // FIX 2: Separate images and videos correctly
+      final imageFiles = <File>[];
+      final videoFiles = <File>[];
+
+      // Check and filter media files
+      for (var file in mediaFiles) {
+        if (await file.exists()) {
+          if (_isImageFile(file)) {
+            imageFiles.add(file);
+          } else if (_isVideoFile(file)) {
+            videoFiles.add(file);
+          }
+        }
+      }
+
+      // FIX 3: Add first image as land_photo
+      if (imageFiles.isNotEmpty) {
+        try {
+          final firstImage = imageFiles.first;
+          final imgStream = http.ByteStream(firstImage.openRead());
+          final imgLen = await firstImage.length();
+          request.files.add(
+            http.MultipartFile(
+              'land_photo',
+              imgStream,
+              imgLen,
+              filename: firstImage.path.split('/').last,
+            ),
+          );
+          debugPrint('Main land photo added: ${firstImage.path}');
+        } catch (e) {
+          debugPrint('Error adding land photo: $e');
+        }
+      }
+
+      // FIX 4: Add first video as land_video
+      if (videoFiles.isNotEmpty) {
+        try {
+          final firstVideo = videoFiles.first;
+          final vidStream = http.ByteStream(firstVideo.openRead());
+          final vidLen = await firstVideo.length();
+          request.files.add(
+            http.MultipartFile(
+              'land_video',
+              vidStream,
+              vidLen,
+              filename: firstVideo.path.split('/').last,
+            ),
+          );
+          debugPrint('Main land video added: ${firstVideo.path}');
+        } catch (e) {
+          debugPrint('Error adding land video: $e');
+        }
+      }
+
+      // FIX 5: Add additional files (both images and videos)
+      // Start from index 1 for additional files
+      for (var i = 1; i < imageFiles.length; i++) {
+        try {
+          final file = imageFiles[i];
+          final stream = http.ByteStream(file.openRead());
+          final len = await file.length();
+          request.files.add(
+            http.MultipartFile(
+              'media_files[]',
+              stream,
+              len,
+              filename: file.path.split('/').last,
+            ),
+          );
+          debugPrint('Additional photo added: ${file.path}');
+        } catch (e) {
+          debugPrint('Error adding additional photo: $e');
+        }
+      }
+
+      for (var i = 1; i < videoFiles.length; i++) {
+        try {
+          final file = videoFiles[i];
+          final stream = http.ByteStream(file.openRead());
+          final len = await file.length();
+          request.files.add(
+            http.MultipartFile(
+              'media_files[]',
+              stream,
+              len,
+              filename: file.path.split('/').last,
+            ),
+          );
+          debugPrint('Additional video added: ${file.path}');
+        } catch (e) {
+          debugPrint('Error adding additional video: $e');
+        }
+      }
+
+      // FIX 6: Debug - check what files are being sent
+      debugPrint('Total files to upload: ${request.files.length}');
+      for (var file in request.files) {
+        debugPrint('File field: ${file.field}, name: ${file.filename}');
       }
 
       // Send request
@@ -5871,127 +6110,6 @@ class _NewLandPageState extends State<NewLandPage> {
 
   // ====================== UI BUILD ======================
   @override
-  // Widget build(BuildContext context) {
-  //   return WillPopScope(
-  //     onWillPop: () async {
-  //       // Check if form has any data (केवल new land के लिए)
-  //       if (!isEditMode) {
-  //         bool hasData =
-  //             farmerNameController.text.isNotEmpty ||
-  //             phoneController.text.isNotEmpty ||
-  //             villageController.text.isNotEmpty ||
-  //             landAreaController.text.isNotEmpty ||
-  //             selectedState != null ||
-  //             selectedDistrict != null;
-  //         if (hasData) {
-  //           bool exitPopup = await showDialog(
-  //             context: context,
-  //             builder: (context) => AlertDialog(
-  //               title: const Text("Unsaved Changes"),
-  //               content: const Text(
-  //                 "You have unsaved changes. What would you like to do?",
-  //               ),
-  //               actions: [
-  //                 TextButton(
-  //                   onPressed: () => Navigator.pop(context, false),
-  //                   child: const Text("Cancel"),
-  //                 ),
-  //                 TextButton(
-  //                   onPressed: () {
-  //                     _resetForm();
-  //                     Navigator.pop(context, true);
-  //                   },
-  //                   child: const Text(
-  //                     "Clear Form & Exit",
-  //                     style: TextStyle(color: Colors.red),
-  //                   ),
-  //                 ),
-  //                 ElevatedButton(
-  //                   onPressed: () => Navigator.pop(context, true),
-  //                   child: const Text("Exit Anyway"),
-  //                 ),
-  //               ],
-  //             ),
-  //           );
-  //           return exitPopup ?? false;
-  //         }
-  //       }
-  //       return true;
-  //     },
-  //     child: Scaffold(
-  //       backgroundColor: Colors.white,
-  //       appBar: AppBar(
-  //         backgroundColor: Colors.white,
-  //         elevation: 0,
-  //         toolbarHeight: 80,
-  //         title: Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             const Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Text(
-  //                   "Suresh",
-  //                   style: TextStyle(
-  //                     fontSize: 20,
-  //                     fontWeight: FontWeight.bold,
-  //                     color: Colors.black87,
-  //                   ),
-  //                 ),
-  //                 SizedBox(height: 4),
-  //                 Text(
-  //                   "Field Executive",
-  //                   style: TextStyle(fontSize: 14, color: Colors.grey),
-  //                 ),
-  //               ],
-  //             ),
-  //             CircleAvatar(
-  //               radius: 24,
-  //               backgroundColor: Colors.green,
-  //               child: const Icon(Icons.person, color: Colors.white, size: 28),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //       body: Stack(
-  //         children: [
-  //           SingleChildScrollView(
-  //             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 const Text(
-  //                   "New Land Details",
-  //                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  //                 ),
-  //                 const SizedBox(height: 20),
-  //                 _buildAddressSection(),
-  //                 const SizedBox(height: 40),
-  //                 _buildFarmerDetails(),
-  //                 const SizedBox(height: 40),
-  //                 _buildDisputeSection(),
-  //                 const SizedBox(height: 40),
-  //                 _buildLandDetailsSection(),
-  //                 const SizedBox(height: 40),
-  //                 _buildGpsSection(),
-  //                 const SizedBox(height: 40),
-  //                 _buildDocumentsSection(),
-  //                 const SizedBox(height: 30),
-  //                 _buildSubmitButtons(),
-  //                 const SizedBox(height: 30),
-  //               ],
-  //             ),
-  //           ),
-  //           if (submitting)
-  //             Container(
-  //               color: Colors.black26,
-  //               child: const Center(child: CircularProgressIndicator()),
-  //             ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
@@ -6891,7 +7009,8 @@ class _NewLandPageState extends State<NewLandPage> {
       // UPDATE LAND Button (edit mode)
       if (isEditMode)
         ElevatedButton.icon(
-          onPressed: () {
+          onPressed: () 
+          {
             isDraft = false;
             submitNewLand(); // यही function edit mode को भी handle करता है
           },
@@ -6926,32 +7045,17 @@ class _NewLandPageState extends State<NewLandPage> {
           ),
         ),
       ),
-
-      // ✅✅✅ CLEAR FORM Button (केवल new land के लिए)
-      // if (!isEditMode) ...[
-      //   const SizedBox(height: 15),
-      //   OutlinedButton.icon(
-      //     onPressed: _resetForm,
-      //     // icon: const Icon(Icons.clear_all_outlined),
-      //     // label: const Text("Clear All Fields"),
-      //     style: OutlinedButton.styleFrom(
-      //       foregroundColor: Colors.red,
-      //       minimumSize: const Size.fromHeight(45),
-      //       shape: RoundedRectangleBorder(
-      //         borderRadius: BorderRadius.circular(12),
-      //       ),
-      //       side: const BorderSide(color: Colors.red),
-      //     ),
-      //   ),
-      // ],
     ],
   );
 
   // ====================== Reusable UI helpers ======================
-  Widget _sectionContainer({
+  Widget _sectionContainer(
+    {
     required String title,
     required List<Widget> children,
-  }) {
+  }
+  ) 
+  {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
