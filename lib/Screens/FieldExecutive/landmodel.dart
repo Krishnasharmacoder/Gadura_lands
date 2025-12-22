@@ -531,6 +531,8 @@ class LandDetails {
     fencing: json["fencing"],
   );
 
+  get landOwnership => null;
+
   Map<String, dynamic> toJson() => {
     "land_area": landArea,
     "guntas": guntas,

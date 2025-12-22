@@ -8,6 +8,16 @@ import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 
+// class EditLandScreen extends StatefulWidget {
+//   final Datum landData;
+//   final String? landId;
+
+//   const EditLandScreen(land, {super.key, required this.landData, this.landId});
+
+//   @override
+//   State<EditLandScreen> createState() => _EditLandScreenState();
+// }
+
 class EditLandScreen extends StatefulWidget {
   final Datum landData;
   final String? landId;
@@ -71,6 +81,44 @@ class _EditLandScreenState extends State<EditLandScreen> {
   bool isDraft = false; // ✅ ADDED FOR DRAFT OPTION
   String? _landId;
   bool _isDataLoaded = false;
+
+  // Helper function to get mime type
+  String getMimeType(String filePath) {
+    final ext = filePath.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'heic':
+        return 'image/heic';
+      case 'mp4':
+        return 'video/mp4';
+      case 'mov':
+        return 'video/quicktime';
+      case 'avi':
+        return 'video/x-msvideo';
+      case 'mkv':
+        return 'video/x-matroska';
+      case 'wmv':
+        return 'video/x-ms-wmv';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xls':
+        return 'application/vnd.ms-excel';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      default:
+        return 'application/octet-stream';
+    }
+  }
 
   @override
   void initState() {
@@ -1498,32 +1546,63 @@ class _EditLandScreenState extends State<EditLandScreen> {
     // ✅ STATUS BASED ON DRAFT
     request.fields['status'] = isDraft ? 'false' : 'true';
 
-    // ============= ADD FILES =============
+    // ============= ADD FILES WITH MIMETYPE =============
     if (passbookImage != null && passbookImage!.existsSync()) {
+      final file = passbookImage!;
+      final mimeType = getMimeType(file.path);
+      final filename = path.basename(file.path);
+
       request.files.add(
-        await http.MultipartFile.fromPath(
+        http.MultipartFile(
           'passbook_photo',
-          passbookImage!.path,
+          http.ByteStream(file.openRead()),
+          await file.length(),
+          filename: filename,
+          contentType: http.MediaType.parse(mimeType),
         ),
       );
+      print('Passbook image added: $filename, mimeType: $mimeType');
     }
 
+    // Add land photos with mimeType
     for (var photo in landPhotos) {
       if (photo.existsSync()) {
+        final mimeType = getMimeType(photo.path);
+        final filename = path.basename(photo.path);
+
         request.files.add(
-          await http.MultipartFile.fromPath('land_photo', photo.path),
+          http.MultipartFile(
+            'land_photo',
+            http.ByteStream(photo.openRead()),
+            await photo.length(),
+            filename: filename,
+            contentType: http.MediaType.parse(mimeType),
+          ),
         );
+        print('Land photo added: $filename, mimeType: $mimeType');
       }
     }
 
+    // Add land videos with mimeType
     for (var video in landVideos) {
       if (video.existsSync()) {
+        final mimeType = getMimeType(video.path);
+        final filename = path.basename(video.path);
+
         request.files.add(
-          await http.MultipartFile.fromPath('land_video', video.path),
+          http.MultipartFile(
+            'land_video',
+            http.ByteStream(video.openRead()),
+            await video.length(),
+            filename: filename,
+            contentType: http.MediaType.parse(mimeType),
+          ),
         );
+        print('Land video added: $filename, mimeType: $mimeType');
       }
     }
 
+    // Debug information
     print('Sending update request for land: $_landId');
     print('Draft Mode: $isDraft');
     print('Status: ${isDraft ? 'false' : 'true'}');
@@ -1531,6 +1610,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
     print('Gardens: ${selectedGardens.join(',')}');
     print('Sheds: ${selectedSheds.join(',')}');
     print('Farm Ponds: ${selectedFarmPonds.join(',')}');
+    print('Total files to upload: ${request.files.length}');
 
     try {
       final streamedResponse = await request.send();

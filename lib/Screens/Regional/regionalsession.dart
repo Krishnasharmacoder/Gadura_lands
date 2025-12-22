@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:gadura_land/Screens/homepage.dart';
+import 'package:gadura_land/Screens/Regional/regionalhomepage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +18,7 @@ class _SessionPageState extends State<Regionalsession> {
   final TextEditingController startingKm = TextEditingController();
   final TextEditingController endKmController = TextEditingController();
   final TextEditingController transportController = TextEditingController();
-  final ImagePicker _imagePicker = ImagePicker(); // Renamed for clarity
+  final ImagePicker _imagePicker = ImagePicker();
 
   XFile? odometerImage;
   XFile? endOdometerImage;
@@ -32,10 +32,14 @@ class _SessionPageState extends State<Regionalsession> {
   List<dynamic> sessionHistory = [];
   List<Map<String, dynamic>> weeklyStats = [];
 
+  // API base URL
+  static const String _baseUrl = "http://72.61.169.226";
+
   @override
   void initState() {
     super.initState();
     loadTokenAndSession();
+    _initializeWeeklyStats(); // Initialize graph data
   }
 
   Future<void> loadTokenAndSession() async {
@@ -50,10 +54,82 @@ class _SessionPageState extends State<Regionalsession> {
     fetchSessionHistory();
   }
 
+  // Initialize weekly stats with dummy data
+  void _initializeWeeklyStats() {
+    setState(() {
+      weeklyStats = [
+        {"week": "Week 1", "sessions": 8, "landEntries": 12},
+        {"week": "Week 2", "sessions": 6, "landEntries": 9},
+        {"week": "Week 3", "sessions": 10, "landEntries": 12},
+        {"week": "Week 4", "sessions": 4, "landEntries": 6},
+        {"week": "Week 5", "sessions": 9, "landEntries": 13},
+        {"week": "Week 6", "sessions": 7, "landEntries": 10},
+        {"week": "Week 7", "sessions": 11, "landEntries": 16},
+        {"week": "Week 8", "sessions": 5, "landEntries": 8},
+      ];
+    });
+  }
+
+  // Fetch current session data API
+  Future<void> fetchSessionData() async {
+    if (_apiToken == null || _apiToken!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Authentication token not found")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final url = Uri.parse("$_baseUrl/regional/session");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $_apiToken",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decode = jsonDecode(response.body);
+
+        // Check if there's an active session
+        if (decode["data"] != null && decode["data"] is Map) {
+          final sessionData = decode["data"];
+          if (sessionData["id"] != null) {
+            int sessionId = sessionData["id"];
+
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            await prefs.setInt("current_session_id", sessionId);
+
+            setState(() {
+              _currentSessionId = sessionId;
+              _sessionStarted = true;
+
+              // Pre-fill data if available
+              if (sessionData["starting_km"] != null) {
+                startingKm.text = sessionData["starting_km"].toString();
+              }
+            });
+          }
+        }
+      } else {
+        print("Session data fetch failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error fetching session: $e")));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   // PICK IMAGE - WITH PERMISSION HANDLING
   Future<void> pickOdometerImage() async {
     try {
-      // Check if camera is available
       final isCameraAvailable = await _checkCameraAvailability();
       if (!isCameraAvailable) {
         _showCameraErrorDialog();
@@ -68,7 +144,6 @@ class _SessionPageState extends State<Regionalsession> {
       );
 
       if (pickedFile != null) {
-        // Check file size
         final file = File(pickedFile.path);
         final fileSize = await file.length();
         final fileSizeInMB = fileSize / (1024 * 1024);
@@ -91,7 +166,6 @@ class _SessionPageState extends State<Regionalsession> {
 
   Future<void> pickEndOdometer() async {
     try {
-      // Check if camera is available
       final isCameraAvailable = await _checkCameraAvailability();
       if (!isCameraAvailable) {
         _showCameraErrorDialog();
@@ -106,7 +180,6 @@ class _SessionPageState extends State<Regionalsession> {
       );
 
       if (pickedFile != null) {
-        // Check file size
         final file = File(pickedFile.path);
         final fileSize = await file.length();
         final fileSizeInMB = fileSize / (1024 * 1024);
@@ -129,7 +202,6 @@ class _SessionPageState extends State<Regionalsession> {
 
   Future<void> pickBusTickets() async {
     try {
-      // Check if camera is available
       final isCameraAvailable = await _checkCameraAvailability();
       if (!isCameraAvailable) {
         _showCameraErrorDialog();
@@ -144,7 +216,6 @@ class _SessionPageState extends State<Regionalsession> {
       );
 
       if (pickedFile != null) {
-        // Check file size
         final file = File(pickedFile.path);
         final fileSize = await file.length();
         final fileSizeInMB = fileSize / (1024 * 1024);
@@ -165,22 +236,18 @@ class _SessionPageState extends State<Regionalsession> {
     }
   }
 
-  // Check camera availability
   Future<bool> _checkCameraAvailability() async {
     try {
-      // Check if camera is available
       final camerasAvailable = await _imagePicker
           .pickImage(source: ImageSource.camera)
           .then((_) => true)
           .catchError((_) => false);
-
       return camerasAvailable;
     } catch (e) {
       return false;
     }
   }
 
-  // Show camera error dialog
   void _showCameraErrorDialog() {
     showDialog(
       context: context,
@@ -197,7 +264,6 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
-  // Handle image picker errors
   void _handleImagePickerError(dynamic error) {
     String errorMessage = "Failed to pick image";
 
@@ -223,9 +289,8 @@ class _SessionPageState extends State<Regionalsession> {
     ).showSnackBar(SnackBar(content: Text(errorMessage)));
   }
 
-  // START SESSION API - Starting KM is OPTIONAL
+  // START SESSION API
   Future<void> startSessionApi() async {
-    // Check if token is available
     if (_apiToken == null || _apiToken!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Authentication token not found")),
@@ -233,17 +298,29 @@ class _SessionPageState extends State<Regionalsession> {
       return;
     }
 
+    // Validation
+    if (startingKm.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter starting kilometer")),
+      );
+      return;
+    }
+
+    if (odometerImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload odometer photo")),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("");
+    final url = Uri.parse("$_baseUrl/regional/session");
 
     var request = http.MultipartRequest("POST", url);
     request.headers["Authorization"] = 'Bearer $_apiToken';
 
-    // Send starting_km only if it's not empty
-    if (startingKm.text.trim().isNotEmpty) {
-      request.fields["starting_km"] = startingKm.text.trim();
-    }
+    request.fields["starting_km"] = startingKm.text.trim();
 
     if (odometerImage != null) {
       try {
@@ -278,14 +355,16 @@ class _SessionPageState extends State<Regionalsession> {
           _sessionStarted = true;
         });
 
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text("Session Started! ID: $sessionId")),
-        // );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Session Started!")));
+
+        // Refresh session history
+        fetchSessionHistory();
       } else {
+        final errorMsg = jsonDecode(responseBody)["message"] ?? "Unknown error";
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed: ${response.statusCode} - $responseBody"),
-          ),
+          SnackBar(content: Text("Failed to start session: $errorMsg")),
         );
       }
     } catch (e) {
@@ -297,7 +376,7 @@ class _SessionPageState extends State<Regionalsession> {
     }
   }
 
-  // END SESSION API - All fields are OPTIONAL
+  // END SESSION API
   Future<void> endSessionApi() async {
     if (_currentSessionId == null) {
       ScaffoldMessenger.of(
@@ -306,48 +385,40 @@ class _SessionPageState extends State<Regionalsession> {
       return;
     }
 
-    // Check if any data is entered
-    if (endKmController.text.trim().isEmpty &&
-        transportController.text.trim().isEmpty &&
-        endOdometerImage == null &&
-        ticketImages.isEmpty) {
-      // Ask for confirmation if no data is entered
-      final confirmed = await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("End Session"),
-          content: const Text(
-            "No data entered. End session without any information?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("End Session"),
-            ),
-          ],
+    // Validation
+    if (endKmController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter ending kilometer")),
+      );
+      return;
+    }
+
+    if (endOdometerImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload ending odometer photo")),
+      );
+      return;
+    }
+
+    if (ticketImages.isEmpty && transportController.text.trim().isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please upload bus tickets for transport charges"),
         ),
       );
-
-      if (confirmed != true) {
-        return;
-      }
+      return;
     }
 
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("");
+    final url = Uri.parse(
+      "$_baseUrl/regional/update/session/$_currentSessionId",
+    );
 
     var request = http.MultipartRequest("PUT", url);
     request.headers["Authorization"] = "Bearer $_apiToken";
 
-    // Send only if fields are not empty
-    if (endKmController.text.trim().isNotEmpty) {
-      request.fields["end_km"] = endKmController.text.trim();
-    }
+    request.fields["end_km"] = endKmController.text.trim();
 
     if (transportController.text.trim().isNotEmpty) {
       request.fields["transport_charges"] = transportController.text.trim();
@@ -370,6 +441,7 @@ class _SessionPageState extends State<Regionalsession> {
       }
     }
 
+    // Handle multiple ticket images
     for (var ticket in ticketImages) {
       try {
         request.files.add(
@@ -386,13 +458,12 @@ class _SessionPageState extends State<Regionalsession> {
 
     try {
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Clear session data
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.remove("current_session_id");
 
-        // Reset state
         setState(() {
           _currentSessionId = null;
           _sessionStarted = false;
@@ -404,16 +475,12 @@ class _SessionPageState extends State<Regionalsession> {
           ticketImages.clear();
         });
 
-        // Refresh history
         fetchSessionHistory();
-
         _showSuccessPopup();
       } else {
-        var responseBody = await response.stream.bytesToString();
+        final errorMsg = jsonDecode(responseBody)["message"] ?? "Unknown error";
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed: ${response.statusCode} - $responseBody"),
-          ),
+          SnackBar(content: Text("Failed to end session: $errorMsg")),
         );
       }
     } catch (e) {
@@ -444,10 +511,11 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
+  // FETCH SESSION HISTORY API
   Future<void> fetchSessionHistory() async {
     if (_apiToken == null) return;
 
-    final url = Uri.parse("");
+    final url = Uri.parse("$_baseUrl/regional/session");
 
     try {
       final res = await http.get(
@@ -457,60 +525,68 @@ class _SessionPageState extends State<Regionalsession> {
 
       if (res.statusCode == 200) {
         final decode = jsonDecode(res.body);
-        final data = decode["data"];
 
-        // Group sessions by date
-        Map<String, List<dynamic>> grouped = {};
+        if (decode.containsKey("data")) {
+          final data = decode["data"];
 
-        data.forEach((id, session) {
-          String date = session["date"];
+          List<Map<String, dynamic>> formattedHistory = [];
 
-          if (!grouped.containsKey(date)) {
-            grouped[date] = [];
+          if (data is Map) {
+            data.forEach((id, session) {
+              if (session is Map) {
+                formattedHistory.add({"id": id, ...session});
+              }
+            });
+          } else if (data is List) {
+            formattedHistory = List<Map<String, dynamic>>.from(data);
           }
 
-          grouped[date]!.add(session);
-        });
+          // Group by date
+          Map<String, List<Map<String, dynamic>>> grouped = {};
 
-        // Calculate weekly stats (like your screenshot)
-        _calculateWeeklyStats(data);
+          for (var session in formattedHistory) {
+            String date = session["date"] ?? "Unknown Date";
+            if (!grouped.containsKey(date)) {
+              grouped[date] = [];
+            }
+            grouped[date]!.add(session);
+          }
 
-        // Convert to list for UI
-        List<Map<String, dynamic>> formattedList = grouped.entries.map((e) {
-          return {"date": e.key, "sessions": e.value};
-        }).toList();
+          List<Map<String, dynamic>> groupedList = grouped.entries.map((entry) {
+            return {"date": entry.key, "sessions": entry.value};
+          }).toList();
 
-        setState(() {
-          sessionHistory = formattedList;
-        });
+          setState(() {
+            sessionHistory = groupedList;
+          });
+        }
+      } else {
+        print("Failed to fetch history: ${res.statusCode}");
       }
     } catch (e) {
       print("History Fetch Error: $e");
     }
   }
 
-  // Calculate weekly statistics (like your screenshot)
-  void _calculateWeeklyStats(Map<String, dynamic> data) {
-    // Create dummy data similar to your screenshot
-    // In real app, you would calculate from actual data
-    List<Map<String, dynamic>> weeklyData = [
-      {"week": "Week 1", "sessions": 8, "landEntries": 12},
-      {"week": "Week 2", "sessions": 6, "landEntries": 9},
-      {"week": "Week 3", "sessions": 10, "landEntries": 12},
-      {"week": "Week 4", "sessions": 4, "landEntries": 6},
-      {"week": "Week 5", "sessions": 9, "landEntries": 13},
-      {"week": "Week 6", "sessions": 7, "landEntries": 10},
-      {"week": "Week 7", "sessions": 11, "landEntries": 16},
-      {"week": "Week 8", "sessions": 5, "landEntries": 8},
-    ];
-
-    setState(() {
-      weeklyStats = weeklyData;
-    });
-  }
-
   Future<void> _stopSession() async {
-    final confirmed = true;
+    final confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Stop Session"),
+        content: const Text("Are you sure you want to stop this session?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Stop", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
 
     if (confirmed == true) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -526,6 +602,10 @@ class _SessionPageState extends State<Regionalsession> {
         endOdometerImage = null;
         ticketImages.clear();
       });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Session stopped")));
     }
   }
 
@@ -533,12 +613,11 @@ class _SessionPageState extends State<Regionalsession> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Back press → homepage
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => Homepage()),
+          MaterialPageRoute(builder: (_) => Regionalhomepage()),
         );
-        return false; // prevent default back
+        return false;
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F6FA),
@@ -549,13 +628,22 @@ class _SessionPageState extends State<Regionalsession> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const Homepage()),
+                MaterialPageRoute(builder: (_) => const Regionalhomepage()),
               );
             },
           ),
           elevation: 0,
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                fetchSessionHistory();
+                fetchSessionData();
+              },
+            ),
+          ],
         ),
         body: Stack(
           children: [
@@ -564,10 +652,8 @@ class _SessionPageState extends State<Regionalsession> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // SHOW START SESSION CARD IF NO ACTIVE SESSION
                   if (!_sessionStarted) _sessionCard(),
 
-                  // SHOW END SESSION CARD IF ACTIVE SESSION EXISTS
                   if (_sessionStarted) ...[
                     _endSessionCard(),
                     const SizedBox(height: 25),
@@ -576,7 +662,7 @@ class _SessionPageState extends State<Regionalsession> {
 
                   const SizedBox(height: 25),
 
-                  // WEEKLY STATS CARD (LIKE YOUR SCREENSHOT)
+                  // Graph Card - FIXED
                   _weeklyStatsCard(),
 
                   const SizedBox(height: 25),
@@ -596,7 +682,7 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
-  // WEEKLY STATS CARD (LIKE YOUR SCREENSHOT)
+  // FIXED GRAPH CARD
   Widget _weeklyStatsCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -623,109 +709,12 @@ class _SessionPageState extends State<Regionalsession> {
           ),
           const SizedBox(height: 20),
 
-          // BAR GRAPH CONTAINER
-          Container(
-            height: 220,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            child: Column(
-              children: [
-                // BARS
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: weeklyStats.map((weekData) {
-                      double heightFactor = weekData["landEntries"] / 20.0;
-                      return Column(
-                        children: [
-                          // VALUE ON TOP
-                          Text(
-                            "${weekData["landEntries"]}",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-
-                          // BAR
-                          Container(
-                            width: 25,
-                            height: 120 * heightFactor,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50),
-                              borderRadius: BorderRadius.circular(6),
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  const Color(0xFF4CAF50).withOpacity(0.9),
-                                  const Color(0xFF4CAF50).withOpacity(0.7),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // WEEK LABEL
-                          Text(
-                            weekData["week"],
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-                // X-AXIS SCALE
-                const SizedBox(height: 15),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
-                        "0",
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      Text(
-                        "5",
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      Text(
-                        "10",
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      Text(
-                        "15",
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      Text(
-                        "20",
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // X-AXIS LINE
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  height: 1,
-                  color: Colors.grey.shade300,
-                ),
-              ],
-            ),
-          ),
+          // Graph Container with fixed height
+          SizedBox(height: 250, child: _buildGraph()),
 
           const SizedBox(height: 20),
 
-          // STATS SUMMARY
+          // Stats Summary
           Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
@@ -741,8 +730,16 @@ class _SessionPageState extends State<Regionalsession> {
                   "${weeklyStats.length}",
                   Icons.calendar_today,
                 ),
-                _statItem2("Avg Sessions", "7.5", Icons.bar_chart),
-                _statItem2("Total Entries", "89", Icons.landscape),
+                _statItem2(
+                  "Avg Sessions",
+                  "${_calculateAverageSessions().toStringAsFixed(1)}",
+                  Icons.bar_chart,
+                ),
+                _statItem2(
+                  "Total Entries",
+                  "${_calculateTotalEntries()}",
+                  Icons.landscape,
+                ),
               ],
             ),
           ),
@@ -751,7 +748,159 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
-  // Stat item for weekly stats
+  // Helper method to calculate average sessions
+  double _calculateAverageSessions() {
+    if (weeklyStats.isEmpty) return 0.0;
+    double total = 0;
+    for (var week in weeklyStats) {
+      total += (week["sessions"] as num).toDouble();
+    }
+    return total / weeklyStats.length;
+  }
+
+  // Helper method to calculate total entries
+  int _calculateTotalEntries() {
+    if (weeklyStats.isEmpty) return 0;
+    int total = 0;
+    for (var week in weeklyStats) {
+      total += week["landEntries"] as int;
+    }
+    return total;
+  }
+
+  // BUILD GRAPH WIDGET
+  Widget _buildGraph() {
+    if (weeklyStats.isEmpty) {
+      return const Center(
+        child: Text("No data available", style: TextStyle(color: Colors.grey)),
+      );
+    }
+
+    // Find max value for scaling
+    double maxValue = 0;
+    for (var week in weeklyStats) {
+      if ((week["landEntries"] as num).toDouble() > maxValue) {
+        maxValue = (week["landEntries"] as num).toDouble();
+      }
+    }
+
+    return Column(
+      children: [
+        // Bars Container
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: weeklyStats.map((weekData) {
+                double value = (weekData["landEntries"] as num).toDouble();
+                double heightFactor = maxValue > 0 ? value / maxValue : 0;
+
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Value label
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        value.toInt().toString(),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+
+                    // Bar
+                    Container(
+                      width: 28,
+                      height: 150 * heightFactor,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            const Color(0xFF4CAF50).withOpacity(0.9),
+                            const Color(0xFF2E7D32).withOpacity(0.9),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Week label
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        weekData["week"],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+
+        // X-axis line
+        Container(
+          margin: const EdgeInsets.only(top: 10),
+          height: 1,
+          color: Colors.grey.shade300,
+        ),
+
+        // Scale labels
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "0",
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              ),
+              Text(
+                "${(maxValue * 0.25).toInt()}",
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              ),
+              Text(
+                "${(maxValue * 0.5).toInt()}",
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              ),
+              Text(
+                "${(maxValue * 0.75).toInt()}",
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              ),
+              Text(
+                "${maxValue.toInt()}",
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _statItem2(String label, String value, IconData icon) {
     return Column(
       children: [
@@ -779,7 +928,6 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
-  // START SESSION CARD - Updated to show optional
   Widget _sessionCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -801,8 +949,6 @@ class _SessionPageState extends State<Regionalsession> {
             "Enter Starting Odometer ",
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 5),
-
           const SizedBox(height: 5),
 
           TextField(
@@ -884,7 +1030,6 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
-  // END SESSION CARD - All fields optional
   Widget _endSessionCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -898,15 +1043,17 @@ class _SessionPageState extends State<Regionalsession> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Log Expenses & Readings ",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            "End Session #$_currentSessionId",
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 5),
-
+          const Text(
+            "Log final readings and expenses for this session",
+            style: TextStyle(color: Colors.grey),
+          ),
           const SizedBox(height: 25),
 
-          // TRANSPORT CHARGES (Optional)
           const Text(
             "🚍 Transport Charges ",
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -976,7 +1123,6 @@ class _SessionPageState extends State<Regionalsession> {
 
           const SizedBox(height: 25),
 
-          // END ODOMETER (Optional)
           const Text(
             "🚲 End Odometer Reading ",
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -1040,7 +1186,6 @@ class _SessionPageState extends State<Regionalsession> {
 
           const SizedBox(height: 30),
 
-          // SUBMIT BUTTON
           ElevatedButton(
             onPressed: endSessionApi,
             style: ElevatedButton.styleFrom(
@@ -1061,7 +1206,6 @@ class _SessionPageState extends State<Regionalsession> {
     );
   }
 
-  // STOP SESSION BUTTON
   Widget _stopSessionButton() {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1125,107 +1269,110 @@ class _SessionPageState extends State<Regionalsession> {
           const SizedBox(height: 20),
 
           if (sessionHistory.isEmpty)
-            const Center(child: Text("No session history found")),
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text("No session history found"),
+              ),
+            ),
 
-          ...sessionHistory.map((sessionGroup) {
-            String date = sessionGroup["date"];
-            List sessions = sessionGroup["sessions"];
+          if (sessionHistory.isNotEmpty)
+            ...sessionHistory.map((sessionGroup) {
+              String date = sessionGroup["date"];
+              List<dynamic> sessions = sessionGroup["sessions"];
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: Row(
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined, size: 18),
+                        const SizedBox(width: 10),
+                        Text(
+                          date,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                     children: [
-                      const Icon(Icons.calendar_today_outlined, size: 18),
-                      const SizedBox(width: 10),
-                      Text(
-                        date,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  children: [
-                    ...sessions.map((s) {
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 10,
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade300,
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // TITLE (e.g., Medak)
-                            Text(
-                              s["farmer_name"] ?? "Unknown Location",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                      ...sessions.map((s) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 10,
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.shade300,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-
-                            // SUBTEXT
-                            Text(
-                              "${s["land"] ?? 1} land completed",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 10),
-
-                            // STATUS BADGE
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Session ID: ${s["id"] ?? "N/A"}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  "Completed",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Starting KM: ${s["starting_km"] ?? "N/A"} | End KM: ${s["end_km"] ?? "N/A"}",
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              Text(
+                                "Transport Charges: ₱${s["transport_charges"] ?? "0"}",
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    "Completed",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ],
-                ),
-
-                const Divider(),
-              ],
-            );
-          }).toList(),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                  const Divider(),
+                ],
+              );
+            }).toList(),
         ],
       ),
     );
   }
 
-  // HELPERS
   BoxDecoration _boxDecoration() => BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(18),

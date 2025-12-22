@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gadura_land/Screens/Regional/regionaldetails.dart';
 import 'package:gadura_land/Screens/Regional/regionalprofile.dart';
 import 'package:gadura_land/Screens/Regional/regionalsession.dart';
+import 'package:gadura_land/Screens/Regional/regionalverification.dart';
 import 'package:gadura_land/Screens/Regional/regionalwallet.dart';
-import 'package:gadura_land/Screens/Regional/regionalwork.dart';
 
 class Regionalhomepage extends StatefulWidget {
   const Regionalhomepage({super.key});
@@ -16,8 +16,8 @@ class _RegionalhomepageState extends State<Regionalhomepage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    Regionalwork(),
-    regionaldetails(),
+    Regionalverification(),
+    RegionalDetails(),
     Regionalsession(),
     Regionalwallet(),
     Regionalprofile(),
@@ -42,9 +42,9 @@ class _RegionalhomepageState extends State<Regionalhomepage> {
 
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline),
+            icon: Icon(Icons.person_search_rounded),
             activeIcon: Icon(Icons.work, color: Colors.green),
-            label: "Work",
+            label: "Verification",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.info_outline),

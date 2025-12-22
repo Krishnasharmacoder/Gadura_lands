@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gadura_land/Auth/forget_password.dart';
 import 'package:gadura_land/Auth/loginmodel.dart';
+import 'package:gadura_land/Screens/Regional/regionalhomepage.dart';
 import 'package:gadura_land/Screens/homepage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -70,8 +71,15 @@ class _LoginState extends State<Login> {
                   context,
                   MaterialPageRoute(builder: (context) => const Homepage()),
                 );
+              } else if (role == "regional incharge") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Regionalhomepage()),
+                );
               } else {
-                print("e");
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Unknown role: $role")));
               }
             });
 
