@@ -343,7 +343,9 @@ class Datum {
 
   // Getter for EditLandScreen compatibility
   DocumentsMedia get documentsMedia =>
-      DocumentsMedia.fromDocumentMedia(documentMedia); // ✅ ADDED THIS
+      DocumentsMedia.fromDocumentMedia(documentMedia);
+
+  get status => null; // ✅ ADDED THIS
 
   Map<String, dynamic> toJson() => {
     "id": id, // ✅ ADDED THIS
@@ -532,6 +534,8 @@ class LandDetails {
   );
 
   get landOwnership => null;
+
+  get shed => null;
 
   Map<String, dynamic> toJson() => {
     "land_area": landArea,
